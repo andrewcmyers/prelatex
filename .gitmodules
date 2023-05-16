@@ -1,0 +1,3 @@
+[submodule "easyIO"]
+	path = easyIO
+	url = git@github.com:andrewcmyers/easyIO.git

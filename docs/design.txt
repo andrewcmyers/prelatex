@@ -1,0 +1,19 @@
+Design goals:
+  Expand explicitly defined macros (via \newcommand and not-difficult \*def)
+  Allow specifying which packages to read into and which to treat opaquely
+  Undefined macros should stay unexpanded. May need ability to specify that arguments should be left along.
+  Support \newif and conditionals -> need to understand semantics of various \if commands, e.g. \ifdefined
+  Allow UTF-8 input, at least, and inputenc so that math can be written verbatim (but do we expand Unicode math
+  as per inputenc?)
+  Allow TikZ.
+  Preserve whitespace, comments, and indentation of input.
+  \expandafter, \csname, and \endcsname should work, at least in idiomatic uses.
+  Nested scopes are understood properly.
+
+Document is read as a sequence of tokens and separators, where separators can be real whitespace, or comments.
+
+Tokens and separators are mostly written verbatim to output. But there are exceptions:
+
+ \newcommand, \def, and friends read the contained tokens but simply record a macro definition.
+ \let should also record some kind of definition.
+ Defined macro names are expanded according to their definition, with the arguments expanded lazily as in TeX.
