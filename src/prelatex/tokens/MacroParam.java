@@ -1,7 +1,6 @@
-package tokens;
+package prelatex.tokens;
 
 import easyIO.BacktrackScanner.Location;
-import tokens.Token;
 
 /** A possibly nested macro parameter (#1 - #9, ##1-##9, etc.) */
 

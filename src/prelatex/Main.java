@@ -4,6 +4,7 @@ import easyIO.BacktrackScanner.Location;
 import easyIO.EOF;
 import easyIO.Scanner;
 import easyIO.UnexpectedInput;
+import prelatex.tokens.*;
 import tokens.*;
 
 import java.io.*;
@@ -109,7 +110,7 @@ public class Main {
     }
     private Token parseEnd() throws UnexpectedInput {
         input.consume("}");
-        return new tokens.CloseBrace(location);
+        return new CloseBrace(location);
     }
 
     private Token parseCharacter() throws UnexpectedInput {

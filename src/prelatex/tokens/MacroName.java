@@ -1,7 +1,6 @@
-package tokens;
+package prelatex.tokens;
 
 import easyIO.BacktrackScanner.Location;
-import tokens.Token;
 
 /** A token of the form \abCd...
  */

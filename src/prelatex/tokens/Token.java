@@ -1,4 +1,4 @@
-package tokens;
+package prelatex.tokens;
 
 import easyIO.BacktrackScanner.Location;
 import prelatex.Item;
