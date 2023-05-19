@@ -17,3 +17,29 @@ Tokens and separators are mostly written verbatim to output. But there are excep
  \newcommand, \def, and friends read the contained tokens but simply record a macro definition.
  \let should also record some kind of definition.
  Defined macro names are expanded according to their definition, with the arguments expanded lazily as in TeX.
+
+Problem: hard to have a clean phase separation. Initial idea was to first pull in all the tokens and then
+process them. But \input and \include require reading more tokens. Another possibility is to generate output
+as we process tokens, but then in general we are processing a macro call and there is pending stuff to resolve.
+
+Of course, processing as we go could be helpful for handling changes in tokenization rules, like
+\makeatletter. But then there will need to be a notion of a stack of unresolved macro calls, and
+different modes for how to handle incoming tokens.
+
+Normal mode: tokens come in and are emitted directly. No template.
+     {: emit {, push 'begin' on stack.
+     }: emit }, pop stack to 'begin'.
+
+When active macro seen: push macro / parameter template, enter macro mode
+
+When uninterpreted macro seen: treat as regular token, emit.
+
+In macro mode: parameter template is used to match against incoming input.
+     { : current parameter push 'begin' onto stack, enter argument mode
+     other characters: must match parameter template
+
+argument mode: just collect tokens without expanding them.
+     } : find matching 'begin' on stack and bind parameter to whole token sequence, go
+         back to macro mode.
+
+\expandafter: push macro onto pending stack, go into
