@@ -2,6 +2,7 @@ package prelatex.tokens;
 
 import easyIO.BacktrackScanner.Location;
 import prelatex.Item;
+import prelatex.Main;
 
 /** A token that is meaningful to TeX. */
 public abstract class Token extends Item {
@@ -15,5 +16,9 @@ public abstract class Token extends Item {
     abstract public String toString();
     public String chars() {
         return toString();
+    }
+
+    public void normalProcess(Main main) {
+        main.output(chars());
     }
 }
