@@ -17,9 +17,5 @@ public class MacroName extends Token {
         return "\\" + name;
     }
 
-    @Override
-    public void normalProcess(Main main) {
-    }
-
     public String name() { return name; }
 }

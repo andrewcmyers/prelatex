@@ -47,10 +47,4 @@ public class Main {
             processor.close();
         }
     }
-
-    /** Send string s as output to the appropriate location based on the
-     *  current input source. */
-    public void output(String s) {
-        System.out.print(s);
-    }
 }

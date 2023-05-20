@@ -17,8 +17,4 @@ public abstract class Token extends Item {
     public String chars() {
         return toString();
     }
-
-    public void normalProcess(Main main) {
-        main.output(chars());
-    }
 }
