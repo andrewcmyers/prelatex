@@ -5,17 +5,17 @@ import easyIO.EOF;
 import easyIO.Scanner;
 import easyIO.UnexpectedInput;
 import prelatex.tokens.*;
-import tokens.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.security.UnresolvedPermission;
 import java.util.Deque;
 
 import static prelatex.Main.ParseMode.*;
 
 public class Main {
 
-    static final boolean DEBUG_LEXING = true;
+    static final boolean DEBUG_LEXING = false;
     Scanner input;
     Location location;
 
@@ -62,13 +62,28 @@ public class Main {
                 location = input.location();
                 Item item = parseItem();
                 if (DEBUG_LEXING) {
-                    System.out.println("Saw: " + item);
+                    System.out.printf("Line %d, column %d: %s\n", location.lineNo(), location.column(), item);
+                }
+                if (item.isSeparator()) {
+                    if (mode == NORMAL) output(item.chars());
+                    else {
+                        // ignore separator items that are not for output
+                    }
+                }
+                if (item instanceof Token tok) {
+                    processToken(tok);
                 }
             }
         } catch (UnexpectedInput e) {
             System.err.println("Error at " + location + ":" + e.getMessage());
         } catch (EOF e) {
             // All done.
+        }
+    }
+
+    private void processToken(Token tok) {
+        if (mode == NORMAL) {
+            output(tok.chars());
         }
     }
 
@@ -89,9 +104,13 @@ public class Main {
         }
     }
 
-    private MacroParam parseParameter() throws UnexpectedInput {
+    private MacroParam parseParameter() throws UnexpectedInput, EOF {
         input.consume("#");
-        location = input.location();
+        try {
+            location = input.location();
+        } catch (EOF e) {
+            throw new UnexpectedInput("Macro parameter ended early");
+        }
         int n = input.peek();
         if (n == '#') {
             MacroParam p = parseParameter();
@@ -170,5 +189,6 @@ public class Main {
     /** Send string s as output to the appropriate location based on the
      *  current input source. */
     private void output(String s) {
+        System.out.print(s);
     }
 }

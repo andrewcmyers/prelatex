@@ -10,6 +10,7 @@ public class CharacterToken extends Token {
         this.codepoint = codepoint;
     }
 
+    public String chars() { return toString(); }
     public String toString() {
         return Character.toString(codepoint);
     }

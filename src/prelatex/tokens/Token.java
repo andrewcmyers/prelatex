@@ -13,4 +13,7 @@ public abstract class Token extends Item {
     public boolean isSeparator() { return false; }
 
     abstract public String toString();
+    public String chars() {
+        return toString();
+    }
 }

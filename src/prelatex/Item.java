@@ -15,4 +15,7 @@ abstract public class Item {
     }
 
     public abstract boolean isSeparator();
+
+    /** The output form of this item. */
+    public abstract String chars();
 }
