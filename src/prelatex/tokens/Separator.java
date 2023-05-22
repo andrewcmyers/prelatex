@@ -1,15 +1,16 @@
-package prelatex;
+package prelatex.tokens;
 
-import easyIO.BacktrackScanner.Location;
+import easyIO.BacktrackScanner;
 import org.apache.commons.text.StringEscapeUtils;
+import prelatex.lexer.ScannerLocn;
 
 /** Character from the file that have no significance to TeX, like
  *  whitespace or comments. Still, they should be preserved.
  */
 public class Separator extends Item {
-    String chars;
-    public Separator(String chars, Location loc) {
-        super(loc);
+    private final String chars;
+    public Separator(String chars, BacktrackScanner.Location loc) {
+        super(new ScannerLocn(loc));
         this.chars = chars;
     }
 

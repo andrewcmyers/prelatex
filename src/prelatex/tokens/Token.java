@@ -1,8 +1,6 @@
 package prelatex.tokens;
 
-import easyIO.BacktrackScanner.Location;
-import prelatex.Item;
-import prelatex.Main;
+import prelatex.lexer.Location;
 
 /** A token that is meaningful to TeX. */
 public abstract class Token extends Item {

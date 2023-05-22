@@ -1,24 +1,30 @@
 package prelatex;
 
+import prelatex.lexer.Location;
+import prelatex.tokens.Item;
 import prelatex.tokens.MacroName;
+import prelatex.tokens.Token;
 
 import java.util.List;
 
-public class ItemGroup extends Item {
-    List<Item> items;
-    public ItemGroup(List<Item> items) {
-        super(items.listIterator().next().location());
-        this.items = items;
+public class TokenGroup extends Token {
+    private final Token[] tokens;
+
+    public TokenGroup(List<Token> tokens, Location l) {
+        super(l);
+        this.tokens = tokens.toArray(new Token[0]);
     }
+
     @Override
-    public boolean isSeparator() {
-        return false;
+    public String toString() {
+        return "{" + chars() + "}";
     }
+
     public String chars() {
         StringBuilder b = new StringBuilder();
         b.append('{');
         boolean mayNeedSep = false;
-        for (Item i : items) {
+        for (Item i : tokens) {
             String s = i.chars();
             if (mayNeedSep && Character.isAlphabetic(s.charAt(0))) {
                 b.append(' ');

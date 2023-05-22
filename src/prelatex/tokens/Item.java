@@ -1,6 +1,6 @@
-package prelatex;
+package prelatex.tokens;
 
-import easyIO.BacktrackScanner.Location;
+import prelatex.lexer.Location;
 
 /** A LaTeX file is parsed into a sequence of Items. */
 abstract public class Item {
@@ -10,7 +10,7 @@ abstract public class Item {
         location = loc;
     }
 
-    Location location() {
+    public Location location() {
         return location;
     }
 

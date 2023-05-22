@@ -1,10 +1,10 @@
 package prelatex.tokens;
 
-import easyIO.BacktrackScanner.Location;
+import prelatex.lexer.Location;
 
 /** a token representing a single Unicode character. */
 public class CharacterToken extends Token {
-    int codepoint;
+    private int codepoint;
     public CharacterToken(int codepoint, Location loc) {
         super(loc);
         this.codepoint = codepoint;

@@ -1,4 +1,4 @@
-package prelatex;
+package prelatex.lexer;
 
 import easyIO.BacktrackScanner.Location;
 import easyIO.EOF;
@@ -16,10 +16,20 @@ public class Lexer {
     static final boolean DEBUG_LEXING = false;
     Scanner input;
     Location location;
-    Lexer(String filename) throws FileNotFoundException {
+    public Lexer(String filename) throws FileNotFoundException {
         Reader r = new InputStreamReader(new FileInputStream(filename),
                 StandardCharsets.UTF_8);
         input = new Scanner(r, filename);
+    }
+
+    public void includeSource(String filename) {
+        try {
+            Reader r = new InputStreamReader(new FileInputStream(filename),
+                    StandardCharsets.UTF_8);
+            input.includeSource(r, filename);
+        } catch (FileNotFoundException exc) {
+            System.err.println(exc.getMessage() + filename);
+        }
     }
 
     public static class LexicalError extends Exception {
@@ -32,7 +42,7 @@ public class Lexer {
     }
     /** Read enough input to find the next token.
      */
-    Item nextItem() throws EOF, LexicalError {
+    public Item nextItem() throws EOF, LexicalError {
         location = input.location();
         Item item = parseItem();
         if (DEBUG_LEXING) {
@@ -79,10 +89,10 @@ public class Lexer {
         int n = input.peek();
         if (n == '#') {
             MacroParam p = parseParameter();
-            return new MacroParam(p, location);
+            return new MacroParam(p, new ScannerLocn(location));
         } else if (Character.isDigit(n)) {
             expect(Character.toString(n));
-            return new MacroParam(new CharacterToken(n, input.location()), location);
+            return new MacroParam(new CharacterToken(n, new ScannerLocn(input.location())), new ScannerLocn(location));
         } else {
             throw new LexicalError("Expected macro parameter number 1-9", location);
         }
@@ -90,16 +100,16 @@ public class Lexer {
 
     private Token parseBegin() throws LexicalError {
         expect("{");
-        return new OpenBrace(location);
+        return new OpenBrace(new ScannerLocn(location));
     }
     private Token parseEnd() throws LexicalError {
         expect("}");
-        return new CloseBrace(location);
+        return new CloseBrace(new ScannerLocn(location));
     }
 
     private Token parseCharacter() {
         try {
-            return new CharacterToken(input.next(), location);
+            return new CharacterToken(input.next(), new ScannerLocn(location));
         } catch (EOF e) {
             return notPossible();
         }
@@ -150,7 +160,7 @@ public class Lexer {
         } else { // single-character macro
             b.append(input.next());
         }
-        return new MacroName(b.toString(), location);
+        return new MacroName(b.toString(), new ScannerLocn(location));
     }
 
 }

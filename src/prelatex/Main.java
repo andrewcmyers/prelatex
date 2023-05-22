@@ -1,11 +1,10 @@
 package prelatex;
 
 import easyIO.EOF;
-import easyIO.Scanner;
-import easyIO.UnexpectedInput;
+import prelatex.lexer.Lexer;
+import prelatex.tokens.Item;
 
 import java.io.PrintWriter;
-import java.io.Writer;
 
 public class Main {
     Lexer lexer;
@@ -24,27 +23,17 @@ public class Main {
     }
 
     void usage() throws Exception {
-        throw new Exception("Usage: prelatex <filename.tex>");
+        throw new Exception("Usage: prelatex [--config <configfile>] <filename.tex> ...");
     }
 
     protected void parseArgs(String[] args) throws Exception {
         if (args.length != 1) usage();
         String filename = args[0];
         lexer = new Lexer(filename);
-        processor = new MacroProcessor(new PrintWriter(System.out, true));
+        processor = new MacroProcessor(lexer, new PrintWriter(System.out, true));
     }
 
     void run() {
-        try {
-            while (true) {
-                Item item = lexer.nextItem();
-                processor.handle(item);
-            }
-        } catch (Lexer.LexicalError e) {
-            System.err.println(e.getMessage());
-        } catch (EOF e) {
-            // All done.
-            processor.close();
-        }
+        processor.run();
     }
 }

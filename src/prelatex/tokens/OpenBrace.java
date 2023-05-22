@@ -1,6 +1,6 @@
 package prelatex.tokens;
 
-import easyIO.BacktrackScanner.Location;
+import prelatex.lexer.Location;
 
 public class OpenBrace extends Token {
     public OpenBrace(Location location) {
