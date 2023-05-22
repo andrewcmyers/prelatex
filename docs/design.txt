@@ -43,3 +43,14 @@ argument mode: just collect tokens without expanding them.
          back to macro mode.
 
 \expandafter: push macro onto pending stack, go into
+
+Problem: macros can contain separators in their parameter list. A sequence of tokens that are not
+separated are required to be used in sequence without a separator. So separators are actually semantically meaningful.
+But, when a macro is applied to a sequence of tokens, the parser will match that separator with the absence of a
+separator if necessary to find a match.
+
+A token sequence is a 'thing' in macro parameters -- it won't match things with separators, so we *can't* ignore
+separators completely.
+
+This suggests that the MacroArgs activity needs to track multiple parsing items in parallel. It completes once
+the first parsing item succeeds.
