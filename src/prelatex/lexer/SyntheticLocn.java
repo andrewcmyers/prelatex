@@ -1,7 +1,5 @@
 package prelatex.lexer;
 
-import prelatex.lexer.Location;
-
 /** A fake location that is not in any actual source file. Used for definitions
  * of built-in macros.
  */

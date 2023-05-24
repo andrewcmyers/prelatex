@@ -124,7 +124,7 @@ public class MacroProcessor {
     private void macroCall(MacroName m) throws PrelatexError {
         Macro binding;
         try {
-            binding = context.lookup(m.name());
+            binding = lookup(m.name());
         } catch (Namespace.LookupFailure exc) {
             output(m.chars());
             return;
@@ -139,8 +139,7 @@ public class MacroProcessor {
         LinkedList<Token> result = new LinkedList<>();
         int braceDepth = 0;
         boolean stripBraces = peekToken() instanceof OpenBrace; // do outer braces need to be stripped?
-        boolean first = true;
-        while (true) {
+        for (boolean first = true;; first = false) {
             switch (peekToken()) {
                 case CloseBrace b:
                     if (braceDepth == 0) {
@@ -179,7 +178,6 @@ public class MacroProcessor {
                     }
             }
         }
-
     }
 
     boolean matchesToken(Token expected, Token received) {
