@@ -3,7 +3,6 @@ package prelatex.macros;
 import cms.util.maybe.Maybe;
 import easyIO.EOF;
 import prelatex.PrelatexError;
-import prelatex.SemanticError;
 import prelatex.lexer.Location;
 import prelatex.tokens.MacroParam;
 import prelatex.tokens.Token;
@@ -35,7 +34,7 @@ abstract public class Macro {
      * as the point in the code to blame.
      */
     abstract public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
-            throws SemanticError;
+            throws MacroProcessor.SemanticError;
 
     public void apply(Macro binding, MacroProcessor mp, Location location) throws PrelatexError {
         int position = 0;
@@ -48,7 +47,7 @@ abstract public class Macro {
                     position++;
                     if (delim.isPresent()) position++;
                 } catch (EOF exc) {
-                    throw new SemanticError("File ended while scanning use of " + binding.name, location);
+                    throw new MacroProcessor.SemanticError("File ended while scanning use of " + binding.name, location);
                 }
             } else{
                 try {
@@ -56,7 +55,7 @@ abstract public class Macro {
                     if (mp.matchesToken(t, binding.pattern[position])) {
                         position++;
                     } else {
-                        throw new SemanticError("Token does not match in macro \\" + binding +
+                        throw new MacroProcessor.SemanticError("Token does not match in macro \\" + binding +
                                 ": saw " + t + ", expected " + binding.pattern[position],
                                 t.location);
                     }

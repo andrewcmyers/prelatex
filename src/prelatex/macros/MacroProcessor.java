@@ -229,4 +229,10 @@ public class MacroProcessor {
         }
         return b.toString();
     }
+
+    public static class SemanticError extends PrelatexError {
+        public SemanticError(String m, Location l) {
+            super(m, l);
+        }
+    }
 }

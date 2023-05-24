@@ -1,6 +1,5 @@
 package prelatex.macros;
 
-import prelatex.SemanticError;
 import prelatex.lexer.Location;
 import prelatex.tokens.MacroParam;
 import prelatex.tokens.Token;
@@ -18,7 +17,7 @@ public class UserMacro extends Macro {
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
-        throws SemanticError {
+        throws MacroProcessor.SemanticError {
         LinkedList<Token> tokens = new LinkedList<>();
         for (Token t : body) {
             switch (t) {
@@ -29,7 +28,7 @@ public class UserMacro extends Macro {
                         int parameter = Integer.parseInt(p.token().chars());
                         assert 1 <= parameter && parameter <= 9;
                         if (parameter > numArgs) {
-                            throw new SemanticError("Illegal parameter " + parameter + " in body of " + name
+                            throw new MacroProcessor.SemanticError("Illegal parameter " + parameter + " in body of " + name
                             + " at " + p.location, location);
                         }
                         tokens.addAll(arguments.get(parameter - 1));
