@@ -1,0 +1,24 @@
+\documentclass{article}
+\begin{document}
+
+%\tracingmacros=1
+\obeylines
+%\obeyspaces
+
+\typeout{hi}
+    
+\def\d{D}
+\def\a b #1\a#2d {got (#1) and (#2)}
+
+\a b \d {a}cccd
+
+\def\inp#1{inp saw (#1)}
+
+\def\frob #1 #2 {frob saw (#1) (#2)}
+
+\inp{hello}
+\frob hello there
+
+\tracingmacros=0
+
+\end{document}

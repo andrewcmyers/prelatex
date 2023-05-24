@@ -28,3 +28,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 /prelatex.iml
+
+*.aux
+*.log
+*.pdf
+.*.sw?
+.idea

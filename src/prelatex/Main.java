@@ -1,10 +1,13 @@
 package prelatex;
 
-import easyIO.EOF;
 import prelatex.lexer.Lexer;
-import prelatex.tokens.Item;
+import prelatex.macros.MacroProcessor;
 
+import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     Lexer lexer;
@@ -28,9 +31,18 @@ public class Main {
 
     protected void parseArgs(String[] args) throws Exception {
         if (args.length != 1) usage();
-        String filename = args[0];
-        lexer = new Lexer(filename);
-        processor = new MacroProcessor(lexer, new PrintWriter(System.out, true));
+        List<String> tex_inputs = new ArrayList<>();
+        if (System.getenv("TEXINPUTS") != null)
+            tex_inputs = Arrays.stream(System.getenv("TEXINPUTS").split(":")).toList();
+        for (int i = 0; i < args.length; i++) {
+            String filename = args[i];
+            String baseDir = new File(filename).getParent();
+            ArrayList<String> searchPath = new ArrayList<>(tex_inputs);
+            searchPath.add(baseDir);
+            lexer = new Lexer(filename);
+            processor = new MacroProcessor(lexer, new PrintWriter(System.out, true),
+                                           new PrintWriter(System.err), searchPath);
+        }
     }
 
     void run() {

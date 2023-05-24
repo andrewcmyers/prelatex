@@ -2,16 +2,21 @@ package prelatex.tokens;
 
 import prelatex.lexer.Location;
 
-/** A token that is meaningful to TeX. */
-public abstract class Token extends Item {
+/** A LaTeX file is parsed into a sequence of Tokens, some of which are blank. */
+public abstract class Token {
+
+    public final Location location;
+
     public Token(Location loc) {
-        super(loc);
+        location = loc;
     }
 
-    @Override
-    public boolean isSeparator() { return false; }
+    /* A blank token is some variety of whitespace or a comment */
+    public boolean isBlank() { return false; }
 
     abstract public String toString();
+
+    /** The output form of this item. */
     public String chars() {
         return toString();
     }

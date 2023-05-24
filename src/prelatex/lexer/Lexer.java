@@ -1,9 +1,10 @@
 package prelatex.lexer;
 
-import easyIO.BacktrackScanner.Location;
+import easyIO.BacktrackScanner;
 import easyIO.EOF;
 import easyIO.Scanner;
 import easyIO.UnexpectedInput;
+import prelatex.PrelatexError;
 import prelatex.tokens.*;
 
 import java.io.FileInputStream;
@@ -15,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 public class Lexer {
     static final boolean DEBUG_LEXING = false;
     Scanner input;
-    Location location;
+    BacktrackScanner.Location location;
     public Lexer(String filename) throws FileNotFoundException {
         Reader r = new InputStreamReader(new FileInputStream(filename),
                 StandardCharsets.UTF_8);
@@ -32,25 +33,23 @@ public class Lexer {
         }
     }
 
-    public static class LexicalError extends Exception {
-        Location location;
+    public static class LexicalError extends PrelatexError {
 
         public LexicalError(String message, Location loc) {
-            super(loc + ":" + message);
-            location = loc;
+            super(message, loc);
         }
     }
     /** Read enough input to find the next token.
      */
-    public Item nextItem() throws EOF, LexicalError {
+    public Token nextToken() throws EOF, LexicalError {
         location = input.location();
-        Item item = parseItem();
+        Token item = parseToken();
         if (DEBUG_LEXING) {
             System.out.printf("Line %d, column %d: %s\n", location.lineNo(), location.column(), item);
         }
         return item;
     }
-    private Item parseItem() throws LexicalError, EOF {
+    private Token parseToken() throws LexicalError, EOF {
         int c = input.peek();
         switch (c) {
             case -1: throw new EOF();
@@ -71,11 +70,7 @@ public class Lexer {
         try {
             input.consume(s);
         } catch (UnexpectedInput exc) {
-            try {
-                throw new LexicalError("Expected \"" + s + "\"", input.location());
-            } catch (EOF exc2) {
-                throw new LexicalError("Unexpected end of input, expected \"" + s + "\"", null);
-            }
+            throw new LexicalError("Expected \"" + s + "\"", new ScannerLocn(location));
         }
     }
 
@@ -84,7 +79,7 @@ public class Lexer {
         try {
             location = input.location();
         } catch (EOF e) {
-            throw new LexicalError("Macro parameter ended early", location);
+            throw new LexicalError("Macro parameter ended early", new ScannerLocn(location));
         }
         int n = input.peek();
         if (n == '#') {
@@ -94,7 +89,7 @@ public class Lexer {
             expect(Character.toString(n));
             return new MacroParam(new CharacterToken(n, new ScannerLocn(input.location())), new ScannerLocn(location));
         } else {
-            throw new LexicalError("Expected macro parameter number 1-9", location);
+            throw new LexicalError("Expected macro parameter number 1-9", new ScannerLocn(location));
         }
     }
 
@@ -132,7 +127,7 @@ public class Lexer {
                     b.append(input.next());
                 }
             }
-            return new Separator(b.toString(), location);
+            return new Separator(b.toString(), new ScannerLocn(location));
         } catch (EOF exc) {
             throw new Error("Not possible");
         }
@@ -144,13 +139,13 @@ public class Lexer {
             while (input.peek() != '\n') {
                 b.append(input.next());
             }
-            return new Separator(b.toString(), location);
+            return new Separator(b.toString(), new ScannerLocn(location));
         } catch (EOF e) {
-            throw new LexicalError("Unexpected end of file", location);
+            throw new LexicalError("Unexpected end of file", new ScannerLocn(location));
         }
     }
 
-    private Item parseMacro() throws EOF, LexicalError {
+    private Token parseMacro() throws EOF, LexicalError {
         expect("\\");
         StringBuilder b = new StringBuilder();
         if (Character.isAlphabetic(input.peek())) {
