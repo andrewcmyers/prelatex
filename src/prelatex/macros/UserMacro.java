@@ -13,7 +13,7 @@ public class UserMacro extends Macro {
         super(n);
     }
 
-    private List<Token> body;
+    protected List<Token> body;
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
@@ -22,7 +22,7 @@ public class UserMacro extends Macro {
         for (Token t : body) {
             switch (t) {
                 case MacroParam p:
-                    if (p.token().chars().equals("#")) {
+                    if (p.token() instanceof MacroParam) {
                         tokens.addLast(p.token());
                     } else {
                         int parameter = Integer.parseInt(p.token().chars());

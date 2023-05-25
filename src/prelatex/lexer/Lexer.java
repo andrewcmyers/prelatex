@@ -17,10 +17,15 @@ public class Lexer {
     static final boolean DEBUG_LEXING = false;
     Scanner input;
     BacktrackScanner.Location location;
+
+    enum LexerMode { N, M, S }; // XXX this should be implemented more fully and correctly
+    LexerMode mode;
+
     public Lexer(String filename) throws FileNotFoundException {
         Reader r = new InputStreamReader(new FileInputStream(filename),
                 StandardCharsets.UTF_8);
         input = new Scanner(r, filename);
+        mode = LexerMode.N;
     }
 
     public void includeSource(String filename) {
@@ -53,7 +58,7 @@ public class Lexer {
         int c = input.peek();
         switch (c) {
             case -1: throw new EOF();
-            case '\\': return parseMacro();
+            case '\\': return parseMacroName();
             case '%': return parseComment();
             case '{': return parseBegin();
             case '}': return parseEnd();
@@ -145,17 +150,23 @@ public class Lexer {
         }
     }
 
-    private Token parseMacro() throws EOF, LexicalError {
+    private Token parseMacroName() throws EOF, LexicalError {
         expect("\\");
         StringBuilder b = new StringBuilder();
         if (Character.isAlphabetic(input.peek())) {
             while (input.hasNext() && Character.isAlphabetic(input.peek())) {
                 b.append(input.next());
             }
+            // skip following whitespace
+            while (input.hasNext() && blank(input.peek())) input.next();
         } else { // single-character macro
             b.append(input.next());
         }
         return new MacroName(b.toString(), new ScannerLocn(location));
+    }
+
+    private boolean blank(int c) {
+        return c == ' ' || c == '\t' || c == '\r';
     }
 
 }

@@ -20,22 +20,15 @@ abstract public class Macro {
     protected Token[] pattern;
     protected int numArgs;
 
-    /**
-     * Create a named macro.
-     */
+    /** Create a named macro. */
     public Macro(String name) {
         this.name = name;
     }
 
-    /**
-     * Apply this macro to the state of proc using the specified arguments.
-     * Requires the length of arguments to match the macro's declared parameters,
-     * which must appear in the pattern. In the case of error, location is used
-     * as the point in the code to blame.
+    /** Parse and apply the macro to the parsed arguments. This method is overridden by some specialized
+     *  macros like \newcommand and \def where the parsing needs to be done in a specialized way, and these
+     *  overridden macros need not even use the applyArguments method to do their work.
      */
-    abstract public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
-            throws MacroProcessor.SemanticError;
-
     public void apply(Macro binding, MacroProcessor mp, Location location) throws PrelatexError {
         int position = 0;
         List<List<Token>> arguments = new LinkedList<>();
@@ -49,7 +42,7 @@ abstract public class Macro {
                 } catch (EOF exc) {
                     throw new MacroProcessor.SemanticError("File ended while scanning use of " + binding.name, location);
                 }
-            } else{
+            } else {
                 try {
                     Token t = mp.nextToken();
                     if (mp.matchesToken(t, binding.pattern[position])) {
@@ -66,4 +59,15 @@ abstract public class Macro {
         }
         binding.applyArguments(arguments, mp, location);
     }
+
+    /**
+     * Apply this macro to the state of proc using the specified
+     * (already parsed) arguments. (Each argument is a list of tokens.)
+     * Requires the length of arguments to the macro's declared parameters,
+     * which must appear in the pattern. In the case of error, location is used
+     * as the point in the code to blame.
+     */
+    abstract public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
+            throws PrelatexError;
+
 }

@@ -16,6 +16,8 @@ import prelatex.tokens.*;
 
 public class MacroProcessor {
     private final PrintWriter err;
+    static final boolean DEBUG_MACROS = true;
+    StringBuilder debugOutput = new StringBuilder();
 
     /** Where macro definitions are looked up */
     Context<Macro> context = new Context<>();
@@ -34,15 +36,19 @@ public class MacroProcessor {
 
     PrintWriter out;
 
-    public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err, List<String> searchPath) {
+    public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err) {
         this.out = out;
         this.err = err;
         this.lexer = lexer;
         this.searchPath = searchPath;
-        context.add("input", new InputMacro(searchPath));
+    }
+
+    public void define(String name, Macro m) {
+        context.add(name, m);
     }
 
     void output(String s) {
+        if (DEBUG_MACROS) debugOutput.append(s);
         out.print(s);
     }
 
@@ -66,14 +72,11 @@ public class MacroProcessor {
         }
     }
 
-    public void run() {
+    public void run() throws PrelatexError {
         try {
             normalMode();
-        } catch (PrelatexError e) {
-            System.err.println(e.getMessage());
-        } catch (EOF e) {
+        } catch (EOF e2) {
             // All done.
-            close();
         }
     }
 
@@ -85,7 +88,7 @@ public class MacroProcessor {
         }
     }
 
-    private Token peekToken() throws EOF, LexicalError {
+    Token peekToken() throws EOF, LexicalError {
         if (pendingTokens.isEmpty()) {
             Token t = lexer.nextToken();
             pendingTokens.addFirst(t);
@@ -132,10 +135,12 @@ public class MacroProcessor {
         binding.apply(binding, this, m.location);
     }
 
+    void skipBlanks() throws EOF, LexicalError {
+        while (peekToken().isBlank()) nextToken();
+    }
+
     List<Token> parseMacroArgument(Maybe<Token> delimiter) throws PrelatexError, EOF {
-        if (!delimiter.isPresent()) {
-            while (peekToken().isBlank()) nextToken();
-        }
+        if (!delimiter.isPresent()) skipBlanks();
         LinkedList<Token> result = new LinkedList<>();
         int braceDepth = 0;
         boolean stripBraces = peekToken() instanceof OpenBrace; // do outer braces need to be stripped?
@@ -150,6 +155,7 @@ public class MacroProcessor {
                     if (braceDepth == 0 && stripBraces && !delimiter.isPresent()) {
                         assert result.getFirst() instanceof OpenBrace;
                         result.removeFirst();
+                        result.removeLast();
                         return result;
                     }
                     break;
@@ -174,7 +180,7 @@ public class MacroProcessor {
                         result.add(t);
                     } catch (NoMaybeValue exc) {
                         result.add(t);
-                        return result;
+                        if (braceDepth == 0) return result;
                     }
             }
         }
@@ -205,7 +211,7 @@ public class MacroProcessor {
     }
 
     public void reportError (String msg, Location l){
-        err.println(l + ":" + msg);
+        err.println(l + ": " + msg);
     }
 
     public Macro lookup (String name) throws Namespace.LookupFailure {
