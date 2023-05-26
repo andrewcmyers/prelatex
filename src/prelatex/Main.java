@@ -8,9 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Main {
     Lexer lexer;
@@ -19,6 +17,7 @@ public class Main {
     List<String> tex_inputs = new ArrayList<>();
 
     PrintWriter out;
+    private Set<String> localPackages = new HashSet<>();
 
     public static void main(String[] args) {
         try {
@@ -37,7 +36,6 @@ public class Main {
     }
 
     protected void parseArgs(String[] args) throws Exception {
-        if (args.length != 1) usage();
         int optind = 0;
         Maybe<String> outputFile = Maybe.none();
         for (; optind < args.length; optind++) {
@@ -49,6 +47,13 @@ public class Main {
                 } else {
                     outputFile = Maybe.some(args[++optind].substring(2));
                 }
+            } else if (opt.equals("--local")) {
+                localPackages.add(args[++optind]);
+            } else if (opt.equals("--")) {
+                optind++;
+                break;
+            } else if (opt.equals("-")) {
+                break;
             } else {
                 usage();
             }
@@ -66,23 +71,32 @@ public class Main {
             tex_inputs = Arrays.stream(System.getenv("TEXINPUTS").split(":")).toList();
     }
 
-    private void initializeContext(MacroProcessor mp, List<String> searchPath) {
-        mp.define("input", new InputMacro(searchPath));
+    private void initializeContext(MacroProcessor mp) {
+        mp.define("input", new InputMacro());
         mp.define("def", new Def());
         mp.define("newcommand", new NewCommand());
+        mp.define("providecommand", new RenewCommand());
         mp.define("renewcommand", new RenewCommand());
+        mp.define("RequirePackage", new RequirePackage("RequirePackage"));
+        mp.define("usepackage", new RequirePackage("usepackage"));
+        mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
+        mp.define("newif", new Newif());
     }
 
     void run() {
         try {
             for (String filename : inputFiles) {
-                String baseDir = new File(filename).getParent();
                 ArrayList<String> searchPath = new ArrayList<>(tex_inputs);
-                searchPath.add(baseDir);
+                if (!filename.equals("-")) {
+                    String baseDir = new File(filename).getParent();
+                    searchPath.add(baseDir);
+                }
                 lexer = new Lexer(filename);
                 processor = new MacroProcessor(lexer, out,
-                        new PrintWriter(System.err, true));
-                initializeContext(processor, searchPath);
+                        new PrintWriter(System.err, true),
+                        searchPath);
+                initializeContext(processor);
+                for (String pkg : localPackages) processor.addLocalPackage(pkg);
                 processor.run();
             }
         } catch (PrelatexError|FileNotFoundException e1) {

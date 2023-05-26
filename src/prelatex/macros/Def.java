@@ -15,21 +15,21 @@ import java.util.List;
 
 public class Def extends BuiltinMacro {
     public Def() {
-        super("def");
+        super("def", 2);
     }
 
     @Override
-    public void apply(Macro binding, MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             mp.skipBlanks();
             Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMacroArgument(Maybe.none());
+            List<Token> nameTokens = mp.parseMatchedTokens(Maybe.none());
             if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
                 throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
                         t.location);
             }
             Token mname = nameTokens.get(0);
-            String name_s = mname.chars().substring(1);
+            String name_s = mname.toString().substring(1);
             // code above also appears in NewCommand, sorry
             List<Token> params = new ArrayList<>();
             int n = 0;
@@ -47,12 +47,8 @@ public class Def extends BuiltinMacro {
                     }
                 }
             }
-            List<Token> body = mp.parseMacroArgument(Maybe.none());
-            UserMacro m = new UserMacro(name_s);
-            m.numArgs = n;
-            m.pattern = params.toArray(new Token[0]);
-            m.body = body;
-            mp.define(name_s, m);
+            List<Token> body = mp.parseMatchedTokens(Maybe.none());
+            mp.define(name_s, new DefMacro(name_s, n, params, body));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
         }

@@ -9,9 +9,10 @@ import prelatex.lexer.Location;
 import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class NewCommand extends BuiltinMacro {
+public class NewCommand extends Macro {
 
     public NewCommand() {
         super("newcommand");
@@ -22,12 +23,12 @@ public class NewCommand extends BuiltinMacro {
     }
 
     @Override
-    public void apply(Macro binding, MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             boolean longdef = true;
             mp.skipBlanks();
             Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMacroArgument(Maybe.none());
+            List<Token> nameTokens = mp.parseMatchedTokens(Maybe.none());
             if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
                 throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
                         t.location);
@@ -36,7 +37,7 @@ public class NewCommand extends BuiltinMacro {
             String name_s = mname.chars().substring(1);
             // code above also appears in Def, sorry
             try {
-                mp.context.lookup(name_s);
+                mp.lookup(name_s);
                 switch (name) {
                     case "newcommand":
                         throw new SemanticError("Macro \\" + name_s + " already defined", location);
@@ -60,13 +61,14 @@ public class NewCommand extends BuiltinMacro {
                 mp.skipBlanks();
             }
             int nargs = 0;
+            List<List<Token>> defaultArgs = new ArrayList<>();
             if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
                 mp.nextToken();
                 mp.skipBlanks();
                 Token args = mp.nextToken();
                 try {
                     nargs = Integer.parseInt(args.chars());
-                    if (nargs < 1 || nargs > 9) {
+                    if (nargs < 0 || nargs > 9) {
                         throw new SemanticError("Illegal number of parameters to \\newcommand: " + nargs, location);
                     }
                 } catch (NumberFormatException exc) {
@@ -78,27 +80,32 @@ public class NewCommand extends BuiltinMacro {
                     throw new SemanticError("Expected ] after number of parameters to \\newcommand: " + args.chars(),
                         t2.location);
                 }
+                for (;;) {
+                    mp.skipBlanks();
+                    if (mp.peekToken() instanceof CharacterToken ct && ct.codepoint() == '[') {
+                        mp.nextToken();
+                        List<Token> arg = new ArrayList<>();
+                        for (;;) {
+                            Token at = mp.nextToken();
+                            if (at instanceof CloseBrace) break;
+                            arg.add(at);
+                        }
+                        defaultArgs.add(arg);
+                    } else {
+                        break;
+                    }
+                }
+                nargs += defaultArgs.size();
             }
             mp.skipBlanks();
             if (!(mp.peekToken() instanceof OpenBrace)) {
                 throw new SemanticError("Macro body must be surrounded by braces", mp.peekToken().location);
             }
-            List<Token> body = mp.parseMacroArgument(Maybe.none());
-            UserMacro m = new UserMacro(mname.chars().substring(1));
-            m.numArgs = nargs;
-            m.pattern = new Token[nargs];
-            for (int i = 0; i < nargs; i++) {
-                m.pattern[i] = new MacroParam(new CharacterToken('1'+ i, location), location);
-            }
-            m.body = body;
+            List<Token> body = mp.parseMatchedTokens(Maybe.none());
+            Macro m = new LaTeXMacro(mname.chars().substring(1), nargs, defaultArgs, body);
             mp.define(name_s, m);
         } catch (EOF exc) {
             throw new Lexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
         }
-    }
-
-    @Override
-    public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) {
-        throw new Error("Unused");
     }
 }

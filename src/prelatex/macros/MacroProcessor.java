@@ -1,9 +1,8 @@
 package prelatex.macros;
 
+import java.io.File;
 import java.io.PrintWriter;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import cms.util.maybe.Maybe;
 import cms.util.maybe.NoMaybeValue;
@@ -16,16 +15,16 @@ import prelatex.tokens.*;
 
 public class MacroProcessor {
     private final PrintWriter err;
-    static final boolean DEBUG_MACROS = true;
-    StringBuilder debugOutput = new StringBuilder();
+    private static final boolean DEBUG_MACROS = true;
+    private StringBuilder debugOutput = new StringBuilder();
 
     /** Where macro definitions are looked up */
-    Context<Macro> context = new Context<>();
+    private Context<Macro> context = new Context<>();
 
-    Lexer lexer;
+    private Lexer lexer;
 
     /** The directories to search in for source files */
-    List<String> searchPath;
+    private List<String> searchPath;
 
     /** Tokens that have been read from the lexer but are still waiting to be processed. */
     private final Deque<Token> pendingTokens = new LinkedList<>();
@@ -34,13 +33,23 @@ public class MacroProcessor {
         out.close();
     }
 
-    PrintWriter out;
+    private PrintWriter out;
 
-    public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err) {
+    /** Packages that should be read and expanded. */
+    Set<String> localPackages = new HashSet<>();
+
+    /** Packages that have been read. */
+    Set<String> packagesRead = new HashSet<>();
+
+    public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err, List<String> searchPath) {
         this.out = out;
         this.err = err;
         this.lexer = lexer;
         this.searchPath = searchPath;
+    }
+
+    public void addLocalPackage(String pkgName) {
+        localPackages.add(pkgName);
     }
 
     public void define(String name, Macro m) {
@@ -132,14 +141,24 @@ public class MacroProcessor {
             output(m.chars());
             return;
         }
-        binding.apply(binding, this, m.location);
+        binding.apply(this, m.location);
     }
 
     void skipBlanks() throws EOF, LexicalError {
         while (peekToken().isBlank()) nextToken();
     }
 
-    List<Token> parseMacroArgument(Maybe<Token> delimiter) throws PrelatexError, EOF {
+    /** Parse a sequence of matched tokens. The sequence may be either
+     * delimited by the specified delimiter, in which case the shortest
+     * properly matched sequence of tokens up to the delimiter is returned,
+     * or not delimited, in which case the first token or first
+     * properly matched sequence is returned.
+     *
+     * A sequence is properly matched if each open brace is followed after
+     * properly matched tokens by a corresponding closing brace, and each
+     * conditional is followed similarly by a corresponding \fi
+     */
+    List<Token> parseMatchedTokens(Maybe<Token> delimiter) throws PrelatexError, EOF {
         if (!delimiter.isPresent()) skipBlanks();
         LinkedList<Token> result = new LinkedList<>();
         int braceDepth = 0;
@@ -221,11 +240,11 @@ public class MacroProcessor {
     /** The delimiter, if any, for the macro parameter starting at position in
      *  the pattern.
      *  Requires: pattern[position] must be a parameter. */
-    Maybe<Token> delimiter(Token[] pattern, int position) {
-        assert pattern[position] instanceof MacroParam;
-        if (position == pattern.length - 1) return Maybe.none();
-        if (pattern[position + 1] instanceof MacroParam) return Maybe.none();
-        return Maybe.some(pattern[position + 1]);
+    Maybe<Token> delimiter(List<Token> pattern, int position) {
+        assert pattern.get(position) instanceof MacroParam;
+        if (position == pattern.size() - 1) return Maybe.none();
+        if (pattern.get(position + 1) instanceof MacroParam) return Maybe.none();
+        return Maybe.some(pattern.get(position + 1));
     }
 
     public String flattenToString(List<Token> tokens) {
@@ -236,9 +255,119 @@ public class MacroProcessor {
         return b.toString();
     }
 
+    public void substituteTokens(List<Token> body, List<List<Token>> arguments, Location location) throws SemanticError {
+        LinkedList<Token> tokens = new LinkedList<>();
+        for (Token t : body) {
+            switch (t) {
+                case MacroParam p:
+                    if (p.token() instanceof MacroParam) {
+                        tokens.addLast(p.token());
+                    } else {
+                        int parameter = Integer.parseInt(p.token().chars());
+                        assert 1 <= parameter && parameter <= 9;
+                        if (parameter > arguments.size()) {
+                            throw new MacroProcessor.SemanticError("Illegal parameter " + parameter +
+                                " in macro body at " + p.location, location);
+                        }
+                        tokens.addAll(arguments.get(parameter - 1));
+                    }
+                    break;
+                default:
+                    tokens.addLast(t);
+                    break;
+            }
+        }
+        prependTokens(tokens);
+    }
+
+    public void includeFile(List<Token> fileTokens, String[] exts, Location location) {
+        String filename = flattenToString(fileTokens);
+        try {
+            filename = findFile(filename, exts).get();
+            includeSource(filename);
+        } catch (NoMaybeValue exc) {
+            reportError("Cannot find input file \"" + filename + "\"", location);
+        }
+    }
+
+    static Macro falseValue = new NoopMacro("false", 0);
+    static Macro trueValue = new NoopMacro("true", 0);
+
+    public void setConditionFalse(String condition) {
+        define(condition + " value", falseValue);
+    }
+    public void setConditionTrue(String condition) {
+        define(condition + " value", trueValue);
+    }
+    public boolean testCondition(String condition) {
+        try {
+            if (context.lookup(condition + " value") == trueValue) {
+                return true;
+            }
+        } catch (Namespace.LookupFailure e) {
+            // undefined
+        }
+        return false;
+    }
+
+    /** Read the rest of a conditional whose value is b */
+    public void applyConditional(Location location, boolean b) throws EOF, PrelatexError {
+        List<Token> kept = new ArrayList<>();
+        boolean ifelse = false;
+        for (;;) {
+            Token t = nextToken();
+            if (t instanceof MacroName m) {
+                if (m.name().equals("else")) {
+                    ifelse = true;
+                    break;
+                }
+                if (m.name().equals("fi")) {
+                    break;
+                }
+            }
+            if (b) kept.add(t);
+        }
+        if (ifelse) {
+            for (;;) {
+                Token t = nextToken();
+                if (t instanceof MacroName m) {
+                    if (m.name().equals("fi")) {
+                        break;
+                    }
+                }
+                if (!b) kept.add(t);
+            }
+        }
+        prependTokens(kept);
+    }
+
     public static class SemanticError extends PrelatexError {
         public SemanticError(String m, Location l) {
             super(m, l);
         }
+    }
+
+    /** Find the file whose name starts with filename, using the current search path.
+     */
+    Maybe<String> findFile(String filename, String[] exts) {
+        File f1 = new File(filename);
+        if (!f1.isAbsolute()) {
+            for (String base : searchPath) {
+                try {
+                    return Maybe.some(findFileExt(base, filename, exts).get());
+                } catch (NoMaybeValue exc) {
+                    // keep looking
+                }
+            }
+        }
+        return findFileExt("", filename, exts);
+    }
+
+    private Maybe<String> findFileExt(String base, String filename, String[] extensions) {
+        for (String ext : extensions) {
+            File rel = new File(base, filename + ext);
+            if (rel.canRead()) return Maybe.some(rel.toString());
+        }
+        return Maybe.none();
     }
 }

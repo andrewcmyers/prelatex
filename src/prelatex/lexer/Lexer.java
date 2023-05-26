@@ -22,9 +22,12 @@ public class Lexer {
     LexerMode mode;
 
     public Lexer(String filename) throws FileNotFoundException {
-        Reader r = new InputStreamReader(new FileInputStream(filename),
-                StandardCharsets.UTF_8);
-        input = new Scanner(r, filename);
+        if (filename.equals("-")) {
+            input = new Scanner(new InputStreamReader(System.in), "standard input");
+        } else {
+            Reader r = new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8);
+            input = new Scanner(r, filename);
+        }
         mode = LexerMode.N;
     }
 
@@ -153,8 +156,9 @@ public class Lexer {
     private Token parseMacroName() throws EOF, LexicalError {
         expect("\\");
         StringBuilder b = new StringBuilder();
-        if (Character.isAlphabetic(input.peek())) {
-            while (input.hasNext() && Character.isAlphabetic(input.peek())) {
+        int ch = input.peek();
+        if (legalMacroChar(ch)) {
+            while (input.hasNext() && legalMacroChar(input.peek())) {
                 b.append(input.next());
             }
             // skip following whitespace
@@ -163,6 +167,10 @@ public class Lexer {
             b.append(input.next());
         }
         return new MacroName(b.toString(), new ScannerLocn(location));
+    }
+
+    private boolean legalMacroChar(int c) {
+        return Character.isAlphabetic(c) || c == '@';
     }
 
     private boolean blank(int c) {

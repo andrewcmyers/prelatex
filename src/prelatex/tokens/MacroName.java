@@ -16,5 +16,9 @@ public class MacroName extends Token {
         return "\\" + name;
     }
 
+    @Override
+    public String chars() {
+        return "\\" + name + " ";
+    }
     public String name() { return name; }
 }
