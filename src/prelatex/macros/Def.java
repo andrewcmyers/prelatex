@@ -23,7 +23,7 @@ public class Def extends BuiltinMacro {
         try {
             mp.skipBlanks();
             Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMatchedTokens(Maybe.none());
+            List<Token> nameTokens = mp.parseMacroArg(Maybe.none());
             if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
                 throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
                         t.location);
@@ -47,7 +47,7 @@ public class Def extends BuiltinMacro {
                     }
                 }
             }
-            List<Token> body = mp.parseMatchedTokens(Maybe.none());
+            List<Token> body = mp.parseMacroArg(Maybe.none());
             mp.define(name_s, new DefMacro(name_s, n, params, body));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);

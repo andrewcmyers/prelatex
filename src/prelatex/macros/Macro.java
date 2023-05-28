@@ -21,4 +21,8 @@ abstract public class Macro {
     public boolean isConditional() {
         return false;
     }
+    /** Is this a macro that simply expands into new tokens, or is it special? */
+    public boolean isExpandable() {
+        return false;
+    }
 }

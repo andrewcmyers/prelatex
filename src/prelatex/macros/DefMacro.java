@@ -5,9 +5,14 @@ import prelatex.tokens.Token;
 
 import java.util.List;
 
-/** Macro type 1A (see Macro) */
+/** Macro type 1A (see {@code Macro}): a TeX-syntax macro with user-defined behavior. */
 public class DefMacro extends TeXMacro {
     protected List<Token> body;
+
+    @Override
+    public boolean isExpandable() {
+        return true;
+    }
 
     protected DefMacro(String name, int numArgs, List<Token> pattern, List<Token> body) {
         super(name, numArgs);

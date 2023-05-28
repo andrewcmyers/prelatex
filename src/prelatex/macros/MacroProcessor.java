@@ -11,22 +11,31 @@ import prelatex.*;
 import prelatex.lexer.Lexer;
 import prelatex.lexer.Lexer.LexicalError;
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
 import prelatex.tokens.*;
+
+import static cms.util.maybe.Maybe.some;
 
 public class MacroProcessor {
     private final PrintWriter err;
     private static final boolean DEBUG_MACROS = true;
     private StringBuilder debugOutput = new StringBuilder();
 
-    /** Where macro definitions are looked up */
+    /**
+     * Where macro definitions are looked up
+     */
     private Context<Macro> context = new Context<>();
 
     private Lexer lexer;
 
-    /** The directories to search in for source files */
+    /**
+     * The directories to search in for source files
+     */
     private List<String> searchPath;
 
-    /** Tokens that have been read from the lexer but are still waiting to be processed. */
+    /**
+     * Tokens that have been read from the lexer but are still waiting to be processed.
+     */
     private final Deque<Token> pendingTokens = new LinkedList<>();
 
     public void close() {
@@ -35,10 +44,15 @@ public class MacroProcessor {
 
     private PrintWriter out;
 
-    /** Packages that should be read and expanded. */
+    /**
+     * Packages that should be read and expanded.
+     */
     Set<String> localPackages = new HashSet<>();
+    Set<String> dropPackages = new HashSet<>();
 
-    /** Packages that have been read. */
+    /**
+     * Packages that have been read.
+     */
     Set<String> packagesRead = new HashSet<>();
 
     public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err, List<String> searchPath) {
@@ -51,9 +65,11 @@ public class MacroProcessor {
     public void addLocalPackage(String pkgName) {
         localPackages.add(pkgName);
     }
+    public void addDropPackage(String pkgName) { dropPackages.add(pkgName); }
 
     public void define(String name, Macro m) {
         context.add(name, m);
+        reportDebug("Defining macro \"\\" + name + "\"");
     }
 
     void output(String s) {
@@ -133,7 +149,7 @@ public class MacroProcessor {
         }
     }
 
-    private void macroCall(MacroName m) throws PrelatexError {
+    void macroCall(MacroName m) throws PrelatexError {
         Macro binding;
         try {
             binding = lookup(m.name());
@@ -148,17 +164,102 @@ public class MacroProcessor {
         while (peekToken().isBlank()) nextToken();
     }
 
-    /** Parse a sequence of matched tokens. The sequence may be either
+    Token nextNonblankToken() throws EOF, LexicalError {
+        skipBlanks();
+        return nextToken();
+    }
+
+    public static final MacroName fi = new MacroName("fi", new SyntheticLocn("expected \\fi"));
+
+    /**
+     * Parse a sequence of matched tokens. The sequence may be either
      * delimited by the specified delimiter, in which case the shortest
      * properly matched sequence of tokens up to the delimiter is returned,
      * or not delimited, in which case the first token or first
-     * properly matched sequence is returned.
-     *
+     * properly matched sequence is returned, plus the final delimiter token;
+     * callers may need to remove the delimiter.
+     * <p>
      * A sequence is properly matched if each open brace is followed after
      * properly matched tokens by a corresponding closing brace, and each
      * conditional is followed similarly by a corresponding \fi
      */
-    List<Token> parseMatchedTokens(Maybe<Token> delimiter) throws PrelatexError, EOF {
+    LinkedList<Token> parseMatched(Set<Token> delimiters) throws PrelatexError, EOF {
+        LinkedList<Token> result = new LinkedList<>();
+        for (;;) {
+            if (!delimiters.isEmpty()) {
+                for (Token d : delimiters) {
+                    if (matchesToken(d, peekToken())) {
+                        result.addLast(nextToken());
+                        return result;
+                    }
+                }
+            }
+            Token t = nextToken();
+            switch (t) {
+                case CloseBrace b:
+                    throw new SemanticError("Unexpected close brace", b.location);
+                case OpenBrace b:
+                    result.add(t);
+                    List<Token> more = parseMatched(Set.of(new CloseBrace(b.location)));
+                    result.addAll(more);
+                    break;
+                case MacroName m:
+                    if (m.name().equals("fi"))
+                        throw new SemanticError("Unexpected \\fi", m.location);
+                    try {
+                        Macro binding = lookup(m.name());
+                        if (binding.isConditional()) {
+                            result.add(m);
+                            List<Token> cond = parseMatched(Set.of(fi));
+                            result.addAll(cond);
+                        } else {
+                            result.add(m);
+                        }
+                    } catch (Namespace.LookupFailure e) {
+                        result.add(m);
+                    }
+                    break;
+                default:
+                    result.add(t);
+                    break;
+            }
+            if (delimiters.isEmpty()) return result;
+        }
+    }
+
+    /** If {@code tokens} begins and ends with matching braces, return a new list in
+     * which both braces have been removed. */
+    List<Token> stripOuterBraces(List<Token> tokens) {
+        if (tokens.size() == 0 || !(tokens.get(0) instanceof OpenBrace)) return tokens;
+        int depth = 0;
+        ArrayList<Token> stripped = new ArrayList<>();
+        int i = 0, n = tokens.size();
+        for (Token t : tokens) {
+            if (t instanceof OpenBrace) depth++;
+            if (t instanceof CloseBrace) depth--;
+            if (i == 0) continue;
+            if (i == n - 1 && t instanceof CloseBrace) {
+                assert depth == 0;
+                return stripped;
+            }
+            if (depth == 0) return tokens; // outer braces don't match
+            i++;
+        }
+        return tokens;
+    }
+
+    /** Parse a macro argument. The sequence may be either
+     * delimited by the specified delimiter, in which case the shortest
+     * properly matched sequence of tokens up to the delimiter is returned,
+     * or not delimited, in which case the first token or first
+     * properly matched sequence is returned.
+     * <p>A sequence is properly matched if each open brace is followed after
+     * properly matched tokens by a corresponding closing brace, and each
+     * conditional is followed similarly by a corresponding \fi
+     * TODO replace with parseMatched? But: don't want delimiter and only {
+     * should cause multi-token parsing, not conditionals.
+     */
+    List<Token> parseMacroArg(Maybe<Token> delimiter) throws PrelatexError, EOF {
         if (!delimiter.isPresent()) skipBlanks();
         LinkedList<Token> result = new LinkedList<>();
         int braceDepth = 0;
@@ -196,7 +297,20 @@ public class MacroProcessor {
                             return result;
                         }
                         if (!first && braceDepth == 0) stripBraces = false;
-                        result.add(t);
+                        if (t instanceof MacroName m) {
+                            try {
+                                Macro binding = lookup(m.name());
+                                if (binding.isConditional()) {
+                                    result.add(m);
+                                    List<Token> cond = parseMatched(Set.of(fi));
+                                    result.addAll(cond);
+                                }
+                            } catch (Namespace.LookupFailure e) {
+                                result.add(m);
+                            }
+                        } else {
+                            result.add(t);
+                        }
                     } catch (NoMaybeValue exc) {
                         result.add(t);
                         if (braceDepth == 0) return result;
@@ -232,9 +346,15 @@ public class MacroProcessor {
     public void reportError (String msg, Location l){
         err.println(l + ": " + msg);
     }
+    public void reportDebug (String msg){
+        if (DEBUG_MACROS) err.println("debugging: " + msg);
+    }
 
     public Macro lookup (String name) throws Namespace.LookupFailure {
         return context.lookup(name);
+    }
+    public Macro lookup (MacroName m) throws Namespace.LookupFailure {
+        return context.lookup(m.name());
     }
 
     /** The delimiter, if any, for the macro parameter starting at position in
@@ -244,7 +364,7 @@ public class MacroProcessor {
         assert pattern.get(position) instanceof MacroParam;
         if (position == pattern.size() - 1) return Maybe.none();
         if (pattern.get(position + 1) instanceof MacroParam) return Maybe.none();
-        return Maybe.some(pattern.get(position + 1));
+        return some(pattern.get(position + 1));
     }
 
     public String flattenToString(List<Token> tokens) {
@@ -285,6 +405,9 @@ public class MacroProcessor {
         try {
             filename = findFile(filename, exts).get();
             includeSource(filename);
+            if (DEBUG_MACROS) {
+                reportDebug("Including file " + filename);
+            }
         } catch (NoMaybeValue exc) {
             reportError("Cannot find input file \"" + filename + "\"", location);
         }
@@ -310,33 +433,19 @@ public class MacroProcessor {
         return false;
     }
 
+    static final Token elseToken = new MacroName("else", new SyntheticLocn("\\else terminator"));
+    static final Token fiToken = new MacroName("fi", new SyntheticLocn("\\fi terminator"));
+
     /** Read the rest of a conditional whose value is b */
     public void applyConditional(Location location, boolean b) throws EOF, PrelatexError {
         List<Token> kept = new ArrayList<>();
-        boolean ifelse = false;
-        for (;;) {
-            Token t = nextToken();
-            if (t instanceof MacroName m) {
-                if (m.name().equals("else")) {
-                    ifelse = true;
-                    break;
-                }
-                if (m.name().equals("fi")) {
-                    break;
-                }
-            }
-            if (b) kept.add(t);
-        }
-        if (ifelse) {
-            for (;;) {
-                Token t = nextToken();
-                if (t instanceof MacroName m) {
-                    if (m.name().equals("fi")) {
-                        break;
-                    }
-                }
-                if (!b) kept.add(t);
-            }
+        LinkedList<Token> thenClause = parseMatched(Set.of(elseToken, fiToken));
+        Token sep = thenClause.removeLast();
+        if (b) kept.addAll(thenClause);
+        if (sep.toString().equals("\\else")) {
+            LinkedList<Token> elseClause = parseMatched(Set.of(fiToken));
+            elseClause.removeLast();
+            if (!b) kept.addAll(elseClause);
         }
         prependTokens(kept);
     }
@@ -354,7 +463,7 @@ public class MacroProcessor {
         if (!f1.isAbsolute()) {
             for (String base : searchPath) {
                 try {
-                    return Maybe.some(findFileExt(base, filename, exts).get());
+                    return some(findFileExt(base, filename, exts).get());
                 } catch (NoMaybeValue exc) {
                     // keep looking
                 }
@@ -366,7 +475,7 @@ public class MacroProcessor {
     private Maybe<String> findFileExt(String base, String filename, String[] extensions) {
         for (String ext : extensions) {
             File rel = new File(base, filename + ext);
-            if (rel.canRead()) return Maybe.some(rel.toString());
+            if (rel.canRead()) return some(rel.toString());
         }
         return Maybe.none();
     }

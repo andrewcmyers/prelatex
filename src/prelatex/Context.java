@@ -89,7 +89,7 @@ public class Context<T> implements Namespace<T> {
 			System.err.println("Warning: " + name + " bound to null");
 			return;
 		}
-		nodes.get(nodes.size()-1).put(name,  defn);
+		nodes.get(nodes.size() - 1).put(name,  defn);
 	}
 
 	public int depth() {

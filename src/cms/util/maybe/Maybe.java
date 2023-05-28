@@ -1,7 +1,9 @@
 package cms.util.maybe;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -10,7 +12,7 @@ import java.util.function.Supplier;
  *  Java's Optional class but uses a fast checked exception instead of
  *  a slow unchecked exception.
  */
-public abstract class Maybe<T> implements Iterable<T> {
+public abstract class Maybe<T> implements Iterable<T>, Set<T> {
 
     /** Returns whether a value is contained in this {@code Maybe}.
      *  @return whether a value is contained. */
@@ -71,11 +73,6 @@ public abstract class Maybe<T> implements Iterable<T> {
      */
     public abstract <U> Maybe<U> then(Function<T, U> f);
     
-//    /** If a value v is present and f(v) is non-null, returns a Maybe containing f(v).
-//     *  Otherwise, returns an empty Maybe. Equivalent to thenMaybe(v -> Maybe.from(f(v)))
-//     */
-//    <U> Maybe<U> thenNullable(Function<T, U> f);
-
     /** Returns the contained value, if any; otherwise, returns {@code other}.
      *  Note: since orElse is an ordinary method call, its argument is always computed,
      *  unlike a Java {@code else} statement. If the argument is
@@ -113,9 +110,13 @@ public abstract class Maybe<T> implements Iterable<T> {
     /** Provide an iterator that yields either one {@code T} or none, depending. */
     public abstract Iterator<T> iterator();
 
-    /** True if the Maybe's contents are equal to {@code elem}, false if not or if the Maybe is empty. */
-    public abstract boolean contains(T elem);
-
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        for (Object o : c) {
+            if (!contains(o)) return false;
+        }
+        return true;
+    }
     //----- static methods -----
 
     /** Create a Maybe from a possibly null value v. The

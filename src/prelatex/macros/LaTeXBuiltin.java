@@ -13,6 +13,7 @@ import java.util.List;
 import static cms.util.maybe.Maybe.none;
 import static cms.util.maybe.Maybe.some;
 
+/** A LaTeX-syntax macro with built-in behavior. Macro type 2B per Macro.java */
 abstract public class LaTeXBuiltin extends BuiltinMacro {
     /** Possibly empty list of default arguments. */
     protected final List<List<Token>> defaultArgs;
@@ -35,14 +36,14 @@ abstract public class LaTeXBuiltin extends BuiltinMacro {
             for (int i = 0; i < defaultArgs.size(); i++) {
                 mp.skipBlanks();
                 if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
-                    arguments.add(mp.parseMatchedTokens(some(new CharacterToken(']', location))));
+                    arguments.add(mp.parseMacroArg(some(new CharacterToken(']', location))));
                 } else {
                     arguments.add(defaultArgs.get(i));
                     break;
                 }
             }
             while (arguments.size() < numArgs) {
-                arguments.add(mp.parseMatchedTokens(none()));
+                arguments.add(mp.parseMacroArg(none()));
             }
             applyArguments(arguments, mp, location);
         } catch (EOF e) {

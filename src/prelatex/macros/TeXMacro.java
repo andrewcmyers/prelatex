@@ -10,6 +10,8 @@ import prelatex.tokens.Token;
 import java.util.LinkedList;
 import java.util.List;
 
+/** A TeX-syntax macro with built-in behavior. Macro type 2A (see {@code Macro})
+ */
 abstract public class TeXMacro extends Macro {
     protected int numArgs;
     protected List<Token> pattern;
@@ -37,7 +39,7 @@ abstract public class TeXMacro extends Macro {
             if (pattern.get(position) instanceof MacroParam) {
                 try {
                     Maybe<Token> delim = mp.delimiter(pattern, position);
-                    arguments.add(mp.parseMatchedTokens(delim));
+                    arguments.add(mp.parseMacroArg(delim));
                     position++;
                     if (delim.isPresent()) position++;
                 } catch (EOF exc) {

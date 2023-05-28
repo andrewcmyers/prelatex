@@ -17,7 +17,10 @@ public class Main {
     List<String> tex_inputs = new ArrayList<>();
 
     PrintWriter out;
+    /** Packages to expand */
     private Set<String> localPackages = new HashSet<>();
+    /** Packages to drop */
+    private Set<String> dropPackages = new HashSet<>();
 
     public static void main(String[] args) {
         try {
@@ -49,6 +52,8 @@ public class Main {
                 }
             } else if (opt.equals("--local")) {
                 localPackages.add(args[++optind]);
+            } else if (opt.equals("--drop")) {
+                dropPackages.add(args[++optind]);
             } else if (opt.equals("--")) {
                 optind++;
                 break;
@@ -72,15 +77,24 @@ public class Main {
     }
 
     private void initializeContext(MacroProcessor mp) {
-        mp.define("input", new InputMacro());
         mp.define("def", new Def());
         mp.define("newcommand", new NewCommand());
         mp.define("providecommand", new RenewCommand());
         mp.define("renewcommand", new RenewCommand());
+        mp.define("let", new LetMacro());
+        mp.define("input", new InputMacro());
         mp.define("RequirePackage", new RequirePackage("RequirePackage"));
         mp.define("usepackage", new RequirePackage("usepackage"));
         mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
+        mp.define("relax", new NoopMacro("relax", 0));
         mp.define("newif", new Newif());
+        mp.define("ifx", new Ifx());
+        mp.define("if", new IfEq());
+        mp.define("ifdefined", new IfDefined());
+        mp.define("ifcase", new IfCase());
+        mp.define("csname", new CSName());
+        mp.define("IfFileExists", new IfFileExists());
+        mp.define("ifbool", new IfBool());
     }
 
     void run() {
@@ -97,6 +111,7 @@ public class Main {
                         searchPath);
                 initializeContext(processor);
                 for (String pkg : localPackages) processor.addLocalPackage(pkg);
+                for (String pkg : dropPackages) processor.addDropPackage(pkg);
                 processor.run();
             }
         } catch (PrelatexError|FileNotFoundException e1) {

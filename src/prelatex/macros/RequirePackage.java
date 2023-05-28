@@ -19,10 +19,14 @@ public class RequirePackage extends LaTeXBuiltin {
         assert arguments.size() == 2;
         // TODO do something with the options in argument 1
         String pkgName = mp.flattenToString(arguments.get(1));
-        if (mp.localPackages.contains(pkgName)) {
+        if (mp.localPackages.contains(pkgName) &&
+                !mp.packagesRead.contains(pkgName)) {
+            mp.packagesRead.add(pkgName);
             mp.includeFile(arguments.get(1), new String[]{".sty"}, location);
         } else {
-            mp.output("\\" + name + "{" + pkgName + "}");
+            if (!mp.dropPackages.contains(pkgName)) {
+                mp.output("\\" + name + "{" + pkgName + "}");
+            }
         }
     }
 }

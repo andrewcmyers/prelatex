@@ -28,13 +28,13 @@ public class NewCommand extends Macro {
             boolean longdef = true;
             mp.skipBlanks();
             Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMatchedTokens(Maybe.none());
+            List<Token> nameTokens = mp.parseMacroArg(Maybe.none());
             if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
                 throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
                         t.location);
             }
-            Token mname = nameTokens.get(0);
-            String name_s = mname.chars().substring(1);
+            MacroName mname = (MacroName)nameTokens.get(0);
+            String name_s = mname.name();
             // code above also appears in Def, sorry
             try {
                 mp.lookup(name_s);
@@ -74,8 +74,7 @@ public class NewCommand extends Macro {
                 } catch (NumberFormatException exc) {
                     throw new SemanticError("Illegal number of parameters to \\newcommand: " + args.chars(), location);
                 }
-                mp.skipBlanks();
-                Token t2 = mp.nextToken();
+                Token t2 = mp.nextNonblankToken();
                 if (!t2.chars().equals("]")) {
                     throw new SemanticError("Expected ] after number of parameters to \\newcommand: " + args.chars(),
                         t2.location);
@@ -101,7 +100,7 @@ public class NewCommand extends Macro {
             if (!(mp.peekToken() instanceof OpenBrace)) {
                 throw new SemanticError("Macro body must be surrounded by braces", mp.peekToken().location);
             }
-            List<Token> body = mp.parseMatchedTokens(Maybe.none());
+            List<Token> body = mp.parseMacroArg(Maybe.none());
             Macro m = new LaTeXMacro(mname.chars().substring(1), nargs, defaultArgs, body);
             mp.define(name_s, m);
         } catch (EOF exc) {
