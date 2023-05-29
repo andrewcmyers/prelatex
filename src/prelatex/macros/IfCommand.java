@@ -12,7 +12,7 @@ public class IfCommand extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             mp.applyConditional(location, mp.testCondition(name));
         } catch (EOF e) {

@@ -30,22 +30,21 @@ abstract public class LaTeXBuiltin extends BuiltinMacro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             List<List<Token>> arguments = new LinkedList<>();
-            for (int i = 0; i < defaultArgs.size(); i++) {
+            for (List<Token> defaultArg : defaultArgs) {
                 mp.skipBlanks();
                 if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
                     arguments.add(mp.parseMacroArg(some(new CharacterToken(']', location))));
                 } else {
-                    arguments.add(defaultArgs.get(i));
+                    arguments.add(defaultArg);
                     break;
                 }
             }
             while (arguments.size() < numArgs) {
                 arguments.add(mp.parseMacroArg(none()));
             }
-            mp.prependTokens(delimiter);
             applyArguments(arguments, mp, location);
         } catch (EOF e) {
             throw new MacroProcessor.SemanticError("Unexpected end of input in macro \\" + name, location);

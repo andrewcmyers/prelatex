@@ -18,7 +18,7 @@ abstract public class Macro {
     protected Macro(String name) {
         this.name = name;
     }
-    abstract public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError;
+    abstract public void apply(MacroProcessor mp, Location location) throws PrelatexError;
     public boolean isConditional() {
         return false;
     }

@@ -19,7 +19,7 @@ public class Def extends BuiltinMacro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             mp.skipBlanks();
             Token t = mp.peekToken();

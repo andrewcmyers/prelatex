@@ -1,10 +1,8 @@
 package prelatex.macros;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.function.IntFunction;
 
 import cms.util.maybe.Maybe;
 import cms.util.maybe.NoMaybeValue;
@@ -20,8 +18,7 @@ import static cms.util.maybe.Maybe.some;
 
 public class MacroProcessor {
     private final PrintWriter err;
-    private static final boolean DEBUG_MACROS = true;
-    private StringBuilder debugOutput = new StringBuilder();
+    private static final boolean DEBUG_MACROS = false;
 
     /**
      * Where macro definitions are looked up
@@ -116,6 +113,10 @@ public class MacroProcessor {
         }
     }
 
+    boolean hasPendingTokens() {
+        return !pendingTokens.isEmpty();
+    }
+
     private void normalMode() throws EOF, PrelatexError {
         int braceDepth = 0;
         while (true) {
@@ -143,7 +144,7 @@ public class MacroProcessor {
     }
 
     /** Expand the macro m, putting the tokens in delimiter (if any) after the expansion. */
-    void macroCall(MacroName m, Token ...delimiter) throws PrelatexError {
+    void macroCall(MacroName m) throws PrelatexError {
         Macro binding;
         try {
             binding = lookup(m.name());
@@ -151,7 +152,7 @@ public class MacroProcessor {
             output(m);
             return;
         }
-        binding.apply(this, m.location, delimiter);
+        binding.apply(this, m.location);
     }
 
     void skipBlanks() throws EOF, LexicalError {
@@ -394,7 +395,7 @@ public class MacroProcessor {
         prependTokens(tokens);
     }
 
-    public void includeFile(List<Token> fileTokens, String[] exts, Location location) {
+    public void includeFile(List<Token> fileTokens, List<String> exts, Location location) {
         String filename = flattenToString(fileTokens);
         try {
             filename = findFile(filename, exts).get();
@@ -462,7 +463,7 @@ public class MacroProcessor {
 
     /** Find the file whose name starts with filename, using the current search path.
      */
-    Maybe<String> findFile(String filename, String[] exts) {
+    Maybe<String> findFile(String filename, List<String> exts) {
         File f1 = new File(filename);
         if (!f1.isAbsolute()) {
             for (String base : searchPath) {
@@ -476,7 +477,7 @@ public class MacroProcessor {
         return findFileExt("", filename, exts);
     }
 
-    private Maybe<String> findFileExt(String base, String filename, String[] extensions) {
+    private Maybe<String> findFileExt(String base, String filename, List<String> extensions) {
         for (String ext : extensions) {
             File rel = new File(base, filename + ext);
             if (rel.canRead()) return some(rel.toString());

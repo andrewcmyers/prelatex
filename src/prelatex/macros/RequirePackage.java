@@ -18,23 +18,25 @@ import static prelatex.Main.PackageDisposition.EXPAND;
 public class RequirePackage extends LaTeXBuiltin {
 
     public RequirePackage(String name) {
-        super(name, 2, Arrays.asList(new List[] { new ArrayList<>() }));
+        super(name, 2, List.of(List.of(), List.of()));
     }
 
     @Override
-    public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws PrelatexError {
+    public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location)
+            throws PrelatexError {
         assert arguments.size() == 2;
         // TODO do something with the options in argument 1
         String pkgName = mp.flattenToString(arguments.get(1));
         if (mp.packageDisposition.get(pkgName) == EXPAND &&
                 !mp.packagesRead.contains(pkgName)) {
             mp.packagesRead.add(pkgName);
-            mp.includeFile(arguments.get(1), new String[]{".sty"}, location);
+            mp.includeFile(arguments.get(1), List.of(".sty"), location);
         } else {
-            if (mp.packageDisposition.get(pkgName) != DROP)
+            if (mp.packageDisposition.get(pkgName) != DROP) {
                 mp.output(new MacroName(name, location), new OpenBrace(location));
                 mp.output(mp.stringToTokens(pkgName, location));
                 mp.output(new CloseBrace(location));
+            }
         }
     }
 }

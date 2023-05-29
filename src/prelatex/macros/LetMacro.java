@@ -14,7 +14,7 @@ public class LetMacro extends Macro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             Token m = mp.nextNonblankToken();
             if (m instanceof MacroName nm) {

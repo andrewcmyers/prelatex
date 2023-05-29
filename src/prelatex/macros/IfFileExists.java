@@ -16,7 +16,7 @@ public class IfFileExists extends LaTeXBuiltin {
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws MacroProcessor.SemanticError {
         String filename = mp.flattenToString(arguments.get(0));
-        Maybe<String> mf = mp.findFile(filename, new String[]{"", ".tex"});
+        Maybe<String> mf = mp.findFile(filename, List.of("", ".tex"));
         try {
             if (new File(mf.get()).canRead()) {
                 mp.prependTokens(arguments.get(1));

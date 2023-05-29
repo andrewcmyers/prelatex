@@ -3,6 +3,7 @@ package prelatex;
 import cms.util.maybe.Maybe;
 import prelatex.lexer.ScannerLexer;
 import prelatex.macros.*;
+import prelatex.tokens.Token;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -110,9 +111,7 @@ public class Main {
                     searchPath.add(baseDir);
                 }
                 lexer = new ScannerLexer(filename);
-                ProcessorOutput out = t ->  {
-                    outWriter.print(t.chars());
-                };
+                ProcessorOutput out = new SmashedOutput(outWriter);
                 processor = new MacroProcessor(lexer, out,
                         new PrintWriter(System.err, true),
                         searchPath);

@@ -16,7 +16,7 @@ public class IfDefined extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             Token t = mp.nextNonblankToken();
             if (t instanceof MacroName m) {

@@ -23,7 +23,7 @@ public class NewCommand extends Macro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             boolean longdef = true;
             mp.skipBlanks();

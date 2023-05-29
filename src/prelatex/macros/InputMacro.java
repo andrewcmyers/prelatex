@@ -12,7 +12,6 @@ import java.util.List;
 
 /** The \input macro */
 public class InputMacro extends BuiltinMacro {
-
     public InputMacro() {
         super("input", 1);
         Location loc = new SyntheticLocn("\\RequirePackage parameter 1");
@@ -23,6 +22,6 @@ public class InputMacro extends BuiltinMacro {
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) {
         assert arguments.size() == 1;
-        mp.includeFile(arguments.get(0), new String[] { "", ".tex" }, location);
+        mp.includeFile(arguments.get(0), List.of("", ".tex"), location);
     }
 }

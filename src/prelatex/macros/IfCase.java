@@ -23,7 +23,7 @@ public class IfCase extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             int num = -1;
             mp.skipBlanks();
