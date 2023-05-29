@@ -18,7 +18,7 @@ public class ExpandAfter extends Macro {
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             Token t = mp.nextNonblankToken(); // deferred token
-            Token t2 = mp.nextToken();
+            Token t2 = mp.nextNonblankToken(); // token to possibly expand
             if (t2 instanceof MacroName m2) {
                 mp.macroCall(m2);
                 mp.prependTokens(t);
