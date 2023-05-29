@@ -1,17 +1,16 @@
 package prelatex;
 
-import cms.util.maybe.Maybe;
 import prelatex.macros.ProcessorOutput;
 import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
 
 import java.io.PrintWriter;
 
-public class SmashedOutput implements ProcessorOutput {
+public class CondensedOutput implements ProcessorOutput {
     PrintWriter out;
     boolean lastWasMacro = false;
 
-    SmashedOutput(PrintWriter out) {
+    CondensedOutput(PrintWriter out) {
         this.out = out;
     }
     @Override

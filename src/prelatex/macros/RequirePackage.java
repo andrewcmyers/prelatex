@@ -18,7 +18,7 @@ import static prelatex.Main.PackageDisposition.EXPAND;
 public class RequirePackage extends LaTeXBuiltin {
 
     public RequirePackage(String name) {
-        super(name, 2, List.of(List.of(), List.of()));
+        super(name, 2, List.of(List.of()));
     }
 
     @Override

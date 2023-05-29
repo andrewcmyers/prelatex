@@ -3,9 +3,7 @@ package prelatex;
 import cms.util.maybe.Maybe;
 import prelatex.lexer.ScannerLexer;
 import prelatex.macros.*;
-import prelatex.tokens.Token;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
@@ -15,7 +13,7 @@ import static prelatex.Main.PackageDisposition.DROP;
 import static prelatex.Main.PackageDisposition.EXPAND;
 
 public class Main {
-    ScannerLexer lexer;
+    ScannerLexer in;
     MacroProcessor processor;
     List<String> inputFiles = new ArrayList<>();
     List<String> tex_inputs = new ArrayList<>();
@@ -39,7 +37,7 @@ public class Main {
     }
 
     void usage() throws Exception {
-        throw new Exception("Usage: prelatex [--config <configfile>] <filename.tex> ...");
+        throw new Exception("Usage: prelatex [ --drop <pkg> ] ... [ --local <pkg> ] ...  <filename.tex> ...");
     }
 
     protected void parseArgs(String[] args) throws Exception {
@@ -104,21 +102,13 @@ public class Main {
 
     void run() {
         try {
-            for (String filename : inputFiles) {
-                ArrayList<String> searchPath = new ArrayList<>(tex_inputs);
-                if (!filename.equals("-")) {
-                    String baseDir = new File(filename).getParent();
-                    searchPath.add(baseDir);
-                }
-                lexer = new ScannerLexer(filename);
-                ProcessorOutput out = new SmashedOutput(outWriter);
-                processor = new MacroProcessor(lexer, out,
-                        new PrintWriter(System.err, true),
-                        searchPath);
-                initializeContext(processor);
-                processor.setPackageDisposition(packageDisposition);
-                processor.run();
-            }
+            in = new ScannerLexer(inputFiles);
+            ProcessorOutput out = new CondensedOutput(outWriter);
+            PrintWriter err = new PrintWriter(System.err, true);
+            processor = new MacroProcessor(in, out, err, tex_inputs);
+            initializeContext(processor);
+            processor.setPackageDisposition(packageDisposition);
+            processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {
             System.err.println(e1.getMessage());
         }

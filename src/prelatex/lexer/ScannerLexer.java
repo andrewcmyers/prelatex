@@ -10,7 +10,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ScannerLexer implements Lexer {
     static final boolean DEBUG_LEXING = false;
@@ -20,12 +23,21 @@ public class ScannerLexer implements Lexer {
     enum LexerMode { N, M, S } // XXX this should be implemented more fully and correctly
     LexerMode mode;
 
-    public ScannerLexer(String filename) throws FileNotFoundException {
+    public ScannerLexer(List<String> filenames) throws FileNotFoundException {
+        LinkedList<String> reversed = new LinkedList<>();
+        for (String f: filenames) {
+            reversed.addFirst(f);
+        }
+        String filename = reversed.removeFirst();
+        Charset utf8 = StandardCharsets.UTF_8;
         if (filename.equals("-")) {
             input = new Scanner(new InputStreamReader(System.in), "standard input");
         } else {
-            Reader r = new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8);
+            Reader r = new InputStreamReader(new FileInputStream(filename), utf8);
             input = new Scanner(r, filename);
+        }
+        for (String f : reversed) {
+            input.includeSource(new InputStreamReader(new FileInputStream(f), utf8), f);
         }
         mode = LexerMode.N;
     }

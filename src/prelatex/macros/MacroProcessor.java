@@ -479,6 +479,7 @@ public class MacroProcessor {
 
     private Maybe<String> findFileExt(String base, String filename, List<String> extensions) {
         for (String ext : extensions) {
+            if (base.isEmpty()) base = System.getProperty("user.dir");
             File rel = new File(base, filename + ext);
             if (rel.canRead()) return some(rel.toString());
         }
