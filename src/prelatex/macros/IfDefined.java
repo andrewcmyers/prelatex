@@ -8,7 +8,6 @@ import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 public class IfDefined extends Conditional {
@@ -17,7 +16,7 @@ public class IfDefined extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             Token t = mp.nextNonblankToken();
             if (t instanceof MacroName m) {

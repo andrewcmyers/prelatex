@@ -19,7 +19,7 @@ public class Def extends BuiltinMacro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             mp.skipBlanks();
             Token t = mp.peekToken();
@@ -52,10 +52,5 @@ public class Def extends BuiltinMacro {
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
         }
-    }
-
-    @Override
-    public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws SemanticError {
-
     }
 }

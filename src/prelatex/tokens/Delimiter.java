@@ -1,10 +1,9 @@
 package prelatex.tokens;
 
-import prelatex.lexer.Location;
 import prelatex.lexer.SyntheticLocn;
 
-public class Limiter extends Separator {
-    public Limiter() {
+public class Delimiter extends Separator {
+    public Delimiter() {
         super("", new SyntheticLocn("limiter token"));
     }
 }

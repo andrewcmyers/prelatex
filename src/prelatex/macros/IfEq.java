@@ -15,7 +15,7 @@ public class IfEq extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             mp.skipBlanks();
             ArrayList<Token> tokens = new ArrayList<>();

@@ -1,8 +1,10 @@
 package prelatex.macros;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.IntFunction;
 
 import cms.util.maybe.Maybe;
 import cms.util.maybe.NoMaybeValue;
@@ -38,43 +40,31 @@ public class MacroProcessor {
      */
     private final Deque<Token> pendingTokens = new LinkedList<>();
 
-    public void close() {
-        out.close();
-    }
-
-    private PrintWriter out;
+    private final ProcessorOutput out;
 
     /**
-     * Packages that should be read and expanded.
-     */
-    Set<String> localPackages = new HashSet<>();
-    Set<String> dropPackages = new HashSet<>();
-
-    /**
-     * Packages that have been read.
+     * Packages that have been read already.
      */
     Set<String> packagesRead = new HashSet<>();
 
-    public MacroProcessor(Lexer lexer, PrintWriter out, PrintWriter err, List<String> searchPath) {
+    Map<String, Main.PackageDisposition> packageDisposition;
+
+    public MacroProcessor(Lexer lexer, ProcessorOutput out, PrintWriter err, List<String> searchPath) {
         this.out = out;
         this.err = err;
         this.lexer = lexer;
         this.searchPath = searchPath;
     }
 
-    public void addLocalPackage(String pkgName) {
-        localPackages.add(pkgName);
-    }
-    public void addDropPackage(String pkgName) { dropPackages.add(pkgName); }
-
     public void define(String name, Macro m) {
         context.add(name, m);
         reportDebug("Defining macro \"\\" + name + "\"");
     }
 
-    void output(String s) {
-        if (DEBUG_MACROS) debugOutput.append(s);
-        out.print(s);
+    void output(Token ...s) throws PrelatexError {
+        for (Token t : s) {
+            out.output(t);
+        }
     }
 
     /**
@@ -92,8 +82,11 @@ public class MacroProcessor {
         Token[] a = new Token[items.size()];
         int j = 0;
         for (Token t : items) a[j++] = t;
-        for (j = a.length - 1; j >= 0; j--) {
-            pendingTokens.addFirst(a[j]);
+        prependTokens(a);
+    }
+    void prependTokens(Token ...tokens) {
+        for (int j = tokens.length - 1; j >= 0; j--) {
+            pendingTokens.addFirst(tokens[j]);
         }
     }
 
@@ -131,33 +124,34 @@ public class MacroProcessor {
                 case OpenBrace b:
                     context.push();
                     braceDepth++;
-                    output("{");
+                    output(b);
                     break;
                 case CloseBrace b:
                     if (braceDepth == 0) {
                         throw new LexicalError("Closing brace with no matching opening brace", b.location);
                     }
                     context.pop();
-                    output("}");
+                    output(b);
                     break;
                 case MacroName n:
                     macroCall(n);
                     break;
                 default:
-                    output(t.chars());
+                    output(t);
             }
         }
     }
 
-    void macroCall(MacroName m) throws PrelatexError {
+    /** Expand the macro m, putting the tokens in delimiter (if any) after the expansion. */
+    void macroCall(MacroName m, Token ...delimiter) throws PrelatexError {
         Macro binding;
         try {
             binding = lookup(m.name());
         } catch (Namespace.LookupFailure exc) {
-            output(m.chars());
+            output(m);
             return;
         }
-        binding.apply(this, m.location);
+        binding.apply(this, m.location, delimiter);
     }
 
     void skipBlanks() throws EOF, LexicalError {
@@ -237,7 +231,7 @@ public class MacroProcessor {
         for (Token t : tokens) {
             if (t instanceof OpenBrace) depth++;
             if (t instanceof CloseBrace) depth--;
-            if (i == 0) continue;
+            if (i == 0) { i++; continue; }
             if (i == n - 1 && t instanceof CloseBrace) {
                 assert depth == 0;
                 return stripped;
@@ -448,6 +442,16 @@ public class MacroProcessor {
             if (!b) kept.addAll(elseClause);
         }
         prependTokens(kept);
+    }
+
+    public void setPackageDisposition(Map<String, Main.PackageDisposition> packageDisposition) {
+        this.packageDisposition = packageDisposition;
+    }
+
+    public Token[] stringToTokens(String pkgName, Location location) {
+        return pkgName.codePoints()
+                .mapToObj(i -> new CharacterToken(i, location))
+                .toArray(n -> new Token[n]);
     }
 
     public static class SemanticError extends PrelatexError {

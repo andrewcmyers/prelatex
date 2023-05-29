@@ -24,7 +24,7 @@ public class CSName extends Macro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             ArrayList<Token> tokens = new ArrayList<>();
             collectTokens: for (;;) { Token t = mp.nextNonblankToken();
@@ -52,6 +52,7 @@ public class CSName extends Macro {
                 }
             }
             String name = mp.flattenToString(tokens);
+            mp.prependTokens(delimiter);
             mp.prependTokens(List.of(new MacroName(name, location)));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of input in \\csname", location);

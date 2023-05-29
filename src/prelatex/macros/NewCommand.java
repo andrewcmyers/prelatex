@@ -4,7 +4,7 @@ import cms.util.maybe.Maybe;
 import easyIO.EOF;
 import prelatex.Namespace;
 import prelatex.PrelatexError;
-import prelatex.lexer.Lexer;
+import prelatex.lexer.ScannerLexer;
 import prelatex.lexer.Location;
 import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
@@ -23,7 +23,7 @@ public class NewCommand extends Macro {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             boolean longdef = true;
             mp.skipBlanks();
@@ -104,7 +104,7 @@ public class NewCommand extends Macro {
             Macro m = new LaTeXMacro(mname.chars().substring(1), nargs, defaultArgs, body);
             mp.define(name_s, m);
         } catch (EOF exc) {
-            throw new Lexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
+            throw new ScannerLexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
         }
     }
 }

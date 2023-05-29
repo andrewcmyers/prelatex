@@ -32,7 +32,7 @@ abstract public class TeXMacro extends Macro {
      *  macros like \newcommand and \def where the parsing needs to be done in a specialized way, and these
      *  overridden macros need not even use the applyArguments method to do their work.
      */
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         int position = 0;
         List<List<Token>> arguments = new LinkedList<>();
         while (position < pattern.size()) {

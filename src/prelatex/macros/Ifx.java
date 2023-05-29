@@ -16,7 +16,7 @@ public class Ifx extends Conditional {
     }
 
     @Override
-    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+    public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError {
         try {
             mp.skipBlanks();
             Token t1 = mp.nextToken();

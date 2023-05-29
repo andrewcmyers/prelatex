@@ -2,6 +2,7 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.tokens.Token;
 
 /** Macros may be:
  * 1. user-defined macros introduced by \newcommand or \def, \gdef, etc., for which there is
@@ -17,7 +18,7 @@ abstract public class Macro {
     protected Macro(String name) {
         this.name = name;
     }
-    abstract public void apply(MacroProcessor mp, Location location) throws PrelatexError;
+    abstract public void apply(MacroProcessor mp, Location location, Token[] delimiter) throws PrelatexError;
     public boolean isConditional() {
         return false;
     }

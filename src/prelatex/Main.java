@@ -1,7 +1,7 @@
 package prelatex;
 
 import cms.util.maybe.Maybe;
-import prelatex.lexer.Lexer;
+import prelatex.lexer.ScannerLexer;
 import prelatex.macros.*;
 
 import java.io.File;
@@ -10,17 +10,20 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.*;
 
+import static prelatex.Main.PackageDisposition.DROP;
+import static prelatex.Main.PackageDisposition.EXPAND;
+
 public class Main {
-    Lexer lexer;
+    ScannerLexer lexer;
     MacroProcessor processor;
     List<String> inputFiles = new ArrayList<>();
     List<String> tex_inputs = new ArrayList<>();
 
-    PrintWriter out;
+    PrintWriter outWriter;
     /** Packages to expand */
-    private Set<String> localPackages = new HashSet<>();
-    /** Packages to drop */
-    private Set<String> dropPackages = new HashSet<>();
+    public enum PackageDisposition { EXPAND, KEEP, DROP }
+
+    Map<String, PackageDisposition> packageDisposition = new HashMap<>();
 
     public static void main(String[] args) {
         try {
@@ -43,7 +46,7 @@ public class Main {
         Maybe<String> outputFile = Maybe.none();
         for (; optind < args.length; optind++) {
             String opt = args[optind];
-            if (opt.charAt(0) != '-') break;
+            if (opt.codePointAt(0) != '-') break;
             if (opt.matches("^-o")) {
                 if (opt.length() == 2) {
                     outputFile = Maybe.some(args[++optind]);
@@ -51,9 +54,9 @@ public class Main {
                     outputFile = Maybe.some(args[++optind].substring(2));
                 }
             } else if (opt.equals("--local")) {
-                localPackages.add(args[++optind]);
+                packageDisposition.put(args[++optind], EXPAND);
             } else if (opt.equals("--drop")) {
-                dropPackages.add(args[++optind]);
+                packageDisposition.put(args[++optind], DROP);
             } else if (opt.equals("--")) {
                 optind++;
                 break;
@@ -67,9 +70,9 @@ public class Main {
         if (inputFiles.isEmpty()) usage();
 
         if (!outputFile.isPresent() || outputFile.get().equals("-")) {
-            out = new PrintWriter(System.out, true);
+            outWriter = new PrintWriter(System.out, true);
         } else {
-            out = new PrintWriter(new FileOutputStream(outputFile.get(), true));
+            outWriter = new PrintWriter(new FileOutputStream(outputFile.get(), true));
         }
 
         if (System.getenv("TEXINPUTS") != null)
@@ -93,6 +96,7 @@ public class Main {
         mp.define("ifdefined", new IfDefined());
         mp.define("ifcase", new IfCase());
         mp.define("csname", new CSName());
+        mp.define("expandafter", new ExpandAfter());
         mp.define("IfFileExists", new IfFileExists());
         mp.define("ifbool", new IfBool());
     }
@@ -105,18 +109,20 @@ public class Main {
                     String baseDir = new File(filename).getParent();
                     searchPath.add(baseDir);
                 }
-                lexer = new Lexer(filename);
+                lexer = new ScannerLexer(filename);
+                ProcessorOutput out = t ->  {
+                    outWriter.print(t.chars());
+                };
                 processor = new MacroProcessor(lexer, out,
                         new PrintWriter(System.err, true),
                         searchPath);
                 initializeContext(processor);
-                for (String pkg : localPackages) processor.addLocalPackage(pkg);
-                for (String pkg : dropPackages) processor.addDropPackage(pkg);
+                processor.setPackageDisposition(packageDisposition);
                 processor.run();
             }
         } catch (PrelatexError|FileNotFoundException e1) {
             System.err.println(e1.getMessage());
         }
-        out.close();
+        outWriter.close();
     }
 }
