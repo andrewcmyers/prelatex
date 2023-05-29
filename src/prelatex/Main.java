@@ -13,13 +13,25 @@ import static prelatex.Main.PackageDisposition.DROP;
 import static prelatex.Main.PackageDisposition.EXPAND;
 
 public class Main {
-    ScannerLexer in;
+    /** The core macro processing engine */
     MacroProcessor processor;
+
+    /** The list of files to read */
     List<String> inputFiles = new ArrayList<>();
+
+    /** The lexer for reading input tokens */
+    ScannerLexer in;
+
+    /** Where to look for external files */
     List<String> tex_inputs = new ArrayList<>();
 
+    /** Where output goes */
     PrintWriter outWriter;
-    /** Packages to expand */
+
+    /** Whether to remove comments */
+    private boolean removeComments = false;
+
+    /** How to handle packages used */
     public enum PackageDisposition { EXPAND, KEEP, DROP }
 
     Map<String, PackageDisposition> packageDisposition = new HashMap<>();
@@ -37,7 +49,7 @@ public class Main {
     }
 
     void usage() throws Exception {
-        throw new Exception("Usage: prelatex [ --drop <pkg> ] ... [ --local <pkg> ] ...  <filename.tex> ...");
+        throw new Exception("Usage: prelatex [--nocomments] [ --drop <pkg> ] ... [ --local <pkg> ] ...  <filename.tex> ...");
     }
 
     protected void parseArgs(String[] args) throws Exception {
@@ -56,6 +68,8 @@ public class Main {
                 packageDisposition.put(args[++optind], EXPAND);
             } else if (opt.equals("--drop")) {
                 packageDisposition.put(args[++optind], DROP);
+            } else if (opt.equals("--nocomments")) {
+                removeComments = true;
             } else if (opt.equals("--")) {
                 optind++;
                 break;
@@ -103,7 +117,7 @@ public class Main {
     void run() {
         try {
             in = new ScannerLexer(inputFiles);
-            ProcessorOutput out = new CondensedOutput(outWriter);
+            ProcessorOutput out = new CondensedOutput(outWriter, removeComments);
             PrintWriter err = new PrintWriter(System.err, true);
             processor = new MacroProcessor(in, out, err, tex_inputs);
             initializeContext(processor);
