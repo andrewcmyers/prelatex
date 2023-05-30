@@ -2,10 +2,7 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
-import prelatex.tokens.CloseBrace;
-import prelatex.tokens.MacroName;
-import prelatex.tokens.OpenBrace;
-import prelatex.tokens.Token;
+import prelatex.tokens.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,16 +23,25 @@ public class RequirePackage extends LaTeXBuiltin {
             throws PrelatexError {
         assert arguments.size() == 2;
         // TODO do something with the options in argument 1
-        String pkgName = mp.flattenToString(arguments.get(1));
-        if (mp.packageDisposition.get(pkgName) == EXPAND &&
-                !mp.packagesRead.contains(pkgName)) {
-            mp.packagesRead.add(pkgName);
-            mp.includeFile(arguments.get(1), List.of(".sty"), location);
-        } else {
-            if (mp.packageDisposition.get(pkgName) != DROP) {
-                mp.output(new MacroName(name, location), new OpenBrace(location));
-                mp.output(mp.stringToTokens(pkgName, location));
-                mp.output(new CloseBrace(location));
+        String pkgArg = mp.flattenToString(arguments.get(1));
+        String[] pkgs = pkgArg.split("\\s*,\\s*");
+        for (String pkgName : pkgs) {
+            if (mp.packageDisposition.get(pkgName) == EXPAND &&
+                    !mp.packagesRead.contains(pkgName)) {
+                mp.packagesRead.add(pkgName);
+                mp.includeFile(arguments.get(1), List.of(".sty"), location);
+            } else {
+                if (mp.packageDisposition.get(pkgName) != DROP) {
+                    mp.output(new MacroName(name, location));
+                    if (arguments.get(0).size() > 0) {
+                        mp.output(new CharacterToken('[', location));
+                        mp.output(arguments.get(0).toArray(n -> new Token[n]));
+                        mp.output(new CharacterToken(']', location));
+                    }
+                    mp.output(new OpenBrace(location));
+                    mp.output(mp.stringToTokens(pkgName, location));
+                    mp.output(new CloseBrace(location));
+                }
             }
         }
     }
