@@ -14,6 +14,7 @@ import prelatex.lexer.Location;
 import prelatex.lexer.SyntheticLocn;
 import prelatex.tokens.*;
 
+import static cms.util.maybe.Maybe.none;
 import static cms.util.maybe.Maybe.some;
 
 public class MacroProcessor {
@@ -370,6 +371,11 @@ public class MacroProcessor {
         return b.toString();
     }
 
+    public List<Token> explodeString(String s, Location location) {
+        return s.codePoints().<Token>mapToObj(ch -> new CharacterToken(ch, location)).toList();
+    }
+
+
     public void substituteTokens(List<Token> body, List<List<Token>> arguments, Location location) throws SemanticError {
         LinkedList<Token> tokens = new LinkedList<>();
         for (Token t : body) {
@@ -454,6 +460,97 @@ public class MacroProcessor {
                 .mapToObj(i -> new CharacterToken(i, location))
                 .toArray(n -> new Token[n]);
     }
+
+    /** Parse a string of legal macro name characters */
+    public String parseMacroName(Location location) throws LexicalError {
+        try {
+            StringBuilder b = new StringBuilder();
+            skipBlanks();
+            for (;;) {
+                Token t = peekToken();
+                switch (t) {
+                    case CharacterToken c:
+                        nextToken();
+                        b.appendCodePoint(c.codepoint());
+                        break;
+                    default:
+                        return b.toString();
+                }
+            }
+        } catch (EOF e) {
+            throw new LexicalError("Unexpected end of input parsing macro name", location);
+        }
+    }
+
+    public List<List<Token>> parseLaTeXArguments(int numArgs, List<List<Token>> defaultArgs, Location location) throws PrelatexError {
+        try {
+            List<List<Token>> arguments = new LinkedList<>();
+            for (List<Token> defaultArg : defaultArgs) {
+                skipBlanks();
+                if (peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
+                    nextToken();
+                    arguments.add(parseMacroArg(some(new CharacterToken(']', location))));
+                } else {
+                    arguments.add(defaultArg);
+                    break;
+                }
+            }
+            while (arguments.size() < numArgs) {
+                arguments.add(parseMacroArg(none()));
+            }
+            return arguments;
+        } catch (EOF exc) {
+            throw new LexicalError("Unexpected end of input while parsing macro arguments", location);
+        }
+    }
+
+
+    public record LaTeXParams(int numArgs, List<List<Token>> defaultArgs) { }
+
+    LaTeXParams parseLaTeXParameters(Location location) throws PrelatexError {
+        int nargs = 0;
+        List<List<Token>> defaultArgs = new ArrayList<>();
+        try {
+            if (peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
+                nextToken();
+                skipBlanks();
+                Token args = nextToken();
+                try {
+                    nargs = Integer.parseInt(args.chars());
+                    if (nargs < 0 || nargs > 9) {
+                        throw new SemanticError("Illegal number of parameters to \\newcommand: " + nargs, location);
+                    }
+                } catch (NumberFormatException exc) {
+                    throw new SemanticError("Illegal number of parameters to \\newcommand: " + args.chars(), location);
+                }
+                Token t2 = nextNonblankToken();
+                if (!t2.chars().equals("]")) {
+                    throw new SemanticError("Expected ] after number of parameters to \\newcommand: " + args.chars(),
+                            t2.location);
+                }
+                for (; ; ) {
+                    skipBlanks();
+                    if (peekToken() instanceof CharacterToken ct && ct.codepoint() == '[') {
+                        nextToken();
+                        List<Token> arg = new ArrayList<>();
+                        for (; ; ) {
+                            Token at = nextToken();
+                            if (at instanceof CharacterToken ct2 && ct2.codepoint() == ']') break;
+                            arg.add(at);
+                        }
+                        defaultArgs.add(arg);
+                    } else {
+                        break;
+                    }
+                }
+            }
+            return new LaTeXParams(nargs, defaultArgs);
+        } catch (EOF e) {
+            throw new LexicalError("Unexpected end of input while parsing macro parameters",
+                    location);
+        }
+    }
+
 
     public static class SemanticError extends PrelatexError {
         public SemanticError(String m, Location l) {

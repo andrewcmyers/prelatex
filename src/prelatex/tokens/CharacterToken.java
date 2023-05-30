@@ -16,6 +16,17 @@ public class CharacterToken extends Token {
     }
 
     public String chars() { return toString(); }
+
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof CharacterToken c && c.canEqual(this) && this.codepoint == c.codepoint);
+    }
+
+    @Override
+    public boolean canEqual(Object o) {
+        return (o instanceof CharacterToken);
+    }
+
     public String toString() {
         return Character.toString(codepoint);
     }

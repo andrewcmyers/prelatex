@@ -20,5 +20,15 @@ public class MacroName extends Token {
     public String chars() {
         return "\\" + name + " ";
     }
+
+    @Override public boolean equals(Object o) {
+        return (o instanceof MacroName m && name.equals(m.name) && m.canEqual(this));
+    }
+
+    @Override
+    public boolean canEqual(Object o) {
+        return o instanceof MacroName;
+    }
+
     public String name() { return name; }
 }

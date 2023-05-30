@@ -93,15 +93,10 @@ public class Main {
     }
 
     private void initializeContext(MacroProcessor mp) {
+        // builtin TeX macros
         mp.define("def", new Def());
-        mp.define("newcommand", new NewCommand());
-        mp.define("providecommand", new RenewCommand());
-        mp.define("renewcommand", new RenewCommand());
         mp.define("let", new LetMacro());
         mp.define("input", new InputMacro());
-        mp.define("RequirePackage", new RequirePackage("RequirePackage"));
-        mp.define("usepackage", new RequirePackage("usepackage"));
-        mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
         mp.define("relax", new NoopMacro("relax", 0));
         mp.define("newif", new Newif());
         mp.define("ifx", new Ifx());
@@ -110,7 +105,18 @@ public class Main {
         mp.define("ifcase", new IfCase());
         mp.define("csname", new CSName());
         mp.define("expandafter", new ExpandAfter());
+       // builtin LaTeX macros
+        mp.define("newcommand", new NewCommand());
+        mp.define("providecommand", new RenewCommand());
+        mp.define("renewcommand", new RenewCommand());
+        mp.define("newenvironment", new NewEnvironment());
+        mp.define("begin", new Begin());
+        mp.define("end", new End());
+        mp.define("RequirePackage", new RequirePackage("RequirePackage"));
+        mp.define("usepackage", new RequirePackage("usepackage"));
+        mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
         mp.define("IfFileExists", new IfFileExists());
+       // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
     }
 

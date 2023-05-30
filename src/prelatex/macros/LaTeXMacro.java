@@ -25,6 +25,7 @@ public class LaTeXMacro extends LaTeXBuiltin {
             throws MacroProcessor.SemanticError {
         mp.substituteTokens(body, arguments, location);
     }
+
     @Override
     public boolean isExpandable() {
         return true;

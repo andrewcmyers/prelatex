@@ -27,4 +27,14 @@ public class Separator extends Token {
     public String chars() {
         return chars;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof Separator s && s.canEqual(this));
+    }
+
+    @Override
+    public boolean canEqual(Object o) {
+        return (o instanceof Separator);
+    }
 }

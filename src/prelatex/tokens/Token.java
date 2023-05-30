@@ -20,4 +20,8 @@ public abstract class Token {
     public String chars() {
         return toString();
     }
+
+    @Override
+    public abstract boolean equals(Object o);
+    public abstract boolean canEqual(Object o);
 }

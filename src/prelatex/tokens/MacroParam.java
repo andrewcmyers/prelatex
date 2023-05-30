@@ -20,4 +20,15 @@ public class MacroParam extends Token {
     public String toString() {
         return "#" + token;
     }
+
+    @Override public boolean equals(Object o) {
+        return (o instanceof MacroParam m && token.equals(m.token) && m.canEqual(this));
+    }
+
+    @Override
+    public boolean canEqual(Object o) {
+        return (o instanceof MacroParam);
+    }
+
+
 }

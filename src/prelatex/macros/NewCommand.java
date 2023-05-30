@@ -8,10 +8,11 @@ import prelatex.lexer.ScannerLexer;
 import prelatex.lexer.Location;
 import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
+import static prelatex.macros.MacroProcessor.LaTeXParams;
 
-import java.util.ArrayList;
 import java.util.List;
 
+/** \newcommand */
 public class NewCommand extends Macro {
 
     public NewCommand() {
@@ -25,7 +26,7 @@ public class NewCommand extends Macro {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
-            boolean longdef = true;
+            boolean longdef = true; // TODO: actually enforce this
             mp.skipBlanks();
             Token t = mp.peekToken();
             List<Token> nameTokens = mp.parseMacroArg(Maybe.none());
@@ -60,48 +61,14 @@ public class NewCommand extends Macro {
                 mp.nextToken();
                 mp.skipBlanks();
             }
-            int nargs = 0;
-            List<List<Token>> defaultArgs = new ArrayList<>();
-            if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '[') {
-                mp.nextToken();
-                mp.skipBlanks();
-                Token args = mp.nextToken();
-                try {
-                    nargs = Integer.parseInt(args.chars());
-                    if (nargs < 0 || nargs > 9) {
-                        throw new SemanticError("Illegal number of parameters to \\newcommand: " + nargs, location);
-                    }
-                } catch (NumberFormatException exc) {
-                    throw new SemanticError("Illegal number of parameters to \\newcommand: " + args.chars(), location);
-                }
-                Token t2 = mp.nextNonblankToken();
-                if (!t2.chars().equals("]")) {
-                    throw new SemanticError("Expected ] after number of parameters to \\newcommand: " + args.chars(),
-                        t2.location);
-                }
-                for (;;) {
-                    mp.skipBlanks();
-                    if (mp.peekToken() instanceof CharacterToken ct && ct.codepoint() == '[') {
-                        mp.nextToken();
-                        List<Token> arg = new ArrayList<>();
-                        for (;;) {
-                            Token at = mp.nextToken();
-                            if (at instanceof CloseBrace) break;
-                            arg.add(at);
-                        }
-                        defaultArgs.add(arg);
-                    } else {
-                        break;
-                    }
-                }
-                nargs += defaultArgs.size();
-            }
+            LaTeXParams parameters = mp.parseLaTeXParameters(location);
+
             mp.skipBlanks();
             if (!(mp.peekToken() instanceof OpenBrace)) {
                 throw new SemanticError("Macro body must be surrounded by braces", mp.peekToken().location);
             }
             List<Token> body = mp.parseMacroArg(Maybe.none());
-            Macro m = new LaTeXMacro(mname.chars().substring(1), nargs, defaultArgs, body);
+            Macro m = new LaTeXMacro(mname.name(), parameters.numArgs(), parameters.defaultArgs(), body);
             mp.define(name_s, m);
         } catch (EOF exc) {
             throw new ScannerLexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
