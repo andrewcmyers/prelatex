@@ -26,31 +26,33 @@ this a better tool. Some known issues are:
 The default behavior of PreLaTeX can be modified by using a configuration file, specified using the `--config`
 option. The configuration file uses LWON dictionary syntax. The following options may be specified:
 
-- nocomments: true
+- `nocomments: true`
 
     Remove TeX comments from the output.
 
-- drop package: `<pkg>`
+- `drop package: <pkg>`
 
     Remove the package entirely from the output
 
-- expand package: `<pkg>`
+- `expand package: <pkg>`
 
     Read and process the package contents: useful for local packages.
 
-- drop macro: `<name>`
+- `drop macro: <name>`
 
     Macro `name` is expanded to empty text.
 
-- keep macro: `<name>`
+- `keep macro: <name>`
 
     This macro is not expanded even if its definition is known.
 
-- TEXINPUTS: `<directory list>`
+- `TEXINPUTS <directory list>`
 
     The list of directories to use as the path for finding included packages and other files is
     specified as an array in LWON syntax: surrounded by brackets and separated by commas.
 
     Example:
 
-    TEXINPUTS: [ paper/macros, paper/sections ]
+    ```
+    TEXINPUTS [ paper/macros, paper/sections ]
+    ```
