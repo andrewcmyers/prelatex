@@ -24,7 +24,7 @@ this a better tool. Some known issues are:
 ## Configuration
 
 The default behavior of PreLaTeX can be modified by using a configuration file, specified using the `--config`
-option. The configuration file uses LWON dictionary syntax. The following options may be specified:
+option. The configuration file uses [LWON dictionary syntax](https://github.com/andrewcmyers/lwon). The following options may be specified:
 
 - `nocomments: true`
 
