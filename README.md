@@ -20,4 +20,3 @@ I am hoping that people will contribute to improving its capabilities to make
 this a better tool. Some known issues are:
 
 * incorrect handling of \usepackage and \RequirePackage options
-* no \newenvironment support
