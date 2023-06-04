@@ -1,0 +1,51 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation fileTree(dir: 'lwon/java/src', include: '**/*.java')
+    implementation fileTree(dir: 'easyIO/src', include: '**/*.java')
+    implementation 'org.apache.commons:commons-text:1.9'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+// Main class configuration
+mainClassName = 'prelatex.Main'
+
+// Set up jar task
+jar {
+    dependsOn compileJava
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    from sourceSets.main.output
+}
+
+// Include all source directories
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src', 'lwon/java/src', 'easyIO/src']
+        }
+    }
+}
+
+// Enable preview features
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["--enable-preview"]
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17) // replace with your version
+    }
+}
+
+task updateSubmodules(type: Exec) {
+    commandLine 'git', 'submodule', 'update', '--init', '--recursive'
+}
+
+compileJava.dependsOn updateSubmodules

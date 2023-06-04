@@ -1,4 +1,4 @@
-# PreLaTeX
+# preLaTeX
 
 This tool converts LaTeX source(s) into a single equivalent LaTeX output file, while removing various constructs by expanding them:
 
@@ -24,7 +24,7 @@ this a better tool. Some known issues are:
 
 ## Configuration
 
-The default behavior of PreLaTeX can be modified by using a configuration file, specified using the `--config`
+The default behavior of preLaTeX can be modified by using a configuration file, specified using the `--config`
 option. The configuration file uses [LWON dictionary syntax](https://github.com/andrewcmyers/lwon)
 The following options may be specified:
 
@@ -63,25 +63,26 @@ The following options may be specified:
 
 ## Building
 
-There should be a Gradle build script but there isn't yet. To build you will need to first make sure that you
-have all the submodules: `git submodule update --init`.
+To build you can use Gradle:
 
-Then, the source code you need is found in the following directories, where
-the top-level directory is `prelatex`:
+    gradle jar
+
+Then the script `bin/prelatex` can be used to run the program:
+
+    bin/prelatex myfile.tex
+
+Note that preLaTeX has a number of options for controlling how the file is interpreted.
+
+If you want to run the program inside IntellJ, the source code you need is
+found in the following directories, where the top-level directory is
+`prelatex`:
 
     prelatex/src
     prelatex/easyIO/src
     prelatex/lwon/src
 
-If you are using IntelliJ, you can mark all of them as "source roots" and build. 
-
-To run the program, there is a script in the `bin/` directory called `prelatex` that may work for you. Otherwise,
-it can be run directly through Java. You can set your `CLASSPATH` environment variable to point to the
-build target directory, 
-
-```
-java --enable-preview -cp prelatex/out/production/prelatex prelatex.Main <file.tex>
-```
+Mark all of them as "source roots" and build. Note that you will need to enable preview features
+in the Java compiler and the Java executable itself, with the `--enable-preview` option.
 
 ## Contributing
 
