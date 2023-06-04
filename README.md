@@ -60,6 +60,29 @@ The following options may be specified:
     ```
     TEXINPUTS [ paper/macros, paper/sections ]
     ```
+
+## Building
+
+There should be a Gradle build script but there isn't yet. To build you will need to first make sure that you
+have all the submodules: `git submodule update --init`.
+
+Then, the source code you need is found in the following directories, where
+the top-level directory is `prelatex`:
+
+    prelatex/src
+    prelatex/easyIO/src
+    prelatex/lwon/src
+
+If you are using IntelliJ, you can mark all of them as "source roots" and build. 
+
+To run the program, there is a script in the `bin/` directory called `prelatex` that may work for you. Otherwise,
+it can be run directly through Java. You can set your `CLASSPATH` environment variable to point to the
+build target directory, 
+
+```
+java --enable-preview -cp prelatex/out/production/prelatex prelatex.Main <file.tex>
+```
+
 ## Contributing
 
 Contributions as PRs are welcome. Discussion in the Issues section is probably a good idea before trying to get involved.
