@@ -28,9 +28,11 @@ The default behavior of PreLaTeX can be modified by using a configuration file, 
 option. The configuration file uses [LWON dictionary syntax](https://github.com/andrewcmyers/lwon)
 The following options may be specified:
 
-- `nocomments: true`
+- `comments: false`
 
-    Remove TeX comments from the output.
+    Remove TeX comments from the output if set to false; otherwise,
+    preserve them. Comments inside macro definitions are not preserved,
+    however.
 
 - `drop package: <pkg>`
 
@@ -52,8 +54,8 @@ The following options may be specified:
 
     The list of directories to use as the path for finding included packages and other files is
     specified as an array in LWON syntax: surrounded by brackets and separated by commas.
-
-    Example:
+ 
+    *Example:*
 
     ```
     TEXINPUTS [ paper/macros, paper/sections ]

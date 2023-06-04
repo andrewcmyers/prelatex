@@ -7,7 +7,9 @@ import java.util.*;
 import cms.util.maybe.Maybe;
 import cms.util.maybe.NoMaybeValue;
 import easyIO.EOF;
-import prelatex.*;
+import prelatex.Context;
+import prelatex.Namespace;
+import prelatex.PrelatexError;
 import prelatex.lexer.Lexer;
 import prelatex.lexer.Lexer.LexicalError;
 import prelatex.lexer.Location;
@@ -17,7 +19,6 @@ import prelatex.Main.Disposition;
 
 import static cms.util.maybe.Maybe.none;
 import static cms.util.maybe.Maybe.some;
-import static prelatex.Main.*;
 
 /** The core macro processing algorithm. */
 public class MacroProcessor {
@@ -285,8 +286,6 @@ public class MacroProcessor {
      * <p>A sequence is properly matched if each open brace is followed after
      * properly matched tokens by a corresponding closing brace, and each
      * conditional is followed similarly by a corresponding \fi
-     * TODO replace with parseMatched? But: don't want delimiter and only {
-     * should cause multi-token parsing, not conditionals.
      */
     List<Token> parseMacroArg(Maybe<Token> delimiter) throws PrelatexError, EOF {
         if (!delimiter.isPresent()) skipBlanks();
@@ -491,12 +490,14 @@ public class MacroProcessor {
         prependTokens(kept);
     }
 
+    /** Tell the processor about special macros and packages. */
     public void setDispositions(Map<String, Disposition> packageDisposition,
                                 Map<String, Disposition> macroDisposition) {
         this.packageDisposition = packageDisposition;
         this.macroDisposition = macroDisposition;
     }
 
+    /** Convert a string into an array of character tokens */
     public Token[] stringToTokens(String pkgName, Location location) {
         return pkgName.codePoints()
                 .mapToObj(i -> new CharacterToken(i, location))
@@ -524,6 +525,11 @@ public class MacroProcessor {
         }
     }
 
+    /** Standard parsing of LaTeX arguments given a list of default arguments (normally length 0 or 1)
+     * @param numArgs The total number of arguments to the macro including default arguments
+     * @param defaultArgs The list of default arguments, which must be supplied explicitly in brackets to override
+     * @return A list of lists of tokens, with one element per parameter.
+     */
     public List<List<Token>> parseLaTeXArguments(int numArgs, List<List<Token>> defaultArgs, Location location) throws PrelatexError {
         try {
             List<List<Token>> arguments = new LinkedList<>();
@@ -549,6 +555,8 @@ public class MacroProcessor {
 
     public record LaTeXParams(int numArgs, List<List<Token>> defaultArgs) { }
 
+    /** Standard parsing of LaTeX parameters ala \newcommand or \newenvironment. Returns
+     *  the total number of parameters and the list of default arguments, if any. */
     LaTeXParams parseLaTeXParameters(Location location) throws PrelatexError {
         int nargs = 0;
         List<List<Token>> defaultArgs = new ArrayList<>();
@@ -593,7 +601,7 @@ public class MacroProcessor {
         }
     }
 
-
+    /** An input error that is considered semantic rather than lexical in nature. */
     public static class SemanticError extends PrelatexError {
         public SemanticError(String m, Location l) {
             super(m, l);
@@ -616,6 +624,8 @@ public class MacroProcessor {
         return findFileExt("", filename, exts);
     }
 
+    /** Look for a file with one of the specified extensions in the specified location
+     *  in the file system. */
     private Maybe<String> findFileExt(String base, String filename, List<String> extensions) {
         for (String ext : extensions) {
             if (base.isEmpty()) base = System.getProperty("user.dir");

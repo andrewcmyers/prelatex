@@ -119,8 +119,10 @@ public class Main {
             DataObject data = lwonParser.parseDictionary(scanner.location());
             if (data instanceof Dictionary config) {
                 try {
-                    List<DataObject> lst = config.get("nocomments");
-                    noComments = true;
+                    List<DataObject> lst = config.get("comments");
+                    if (!lst.isEmpty() && lst.get(0) instanceof Text t) {
+                        noComments = !Boolean.parseBoolean(t.value());
+                    }
                 } catch (NotFound e) {
                     // skip
                 }
