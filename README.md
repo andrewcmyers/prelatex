@@ -58,3 +58,6 @@ The following options may be specified:
     ```
     TEXINPUTS [ paper/macros, paper/sections ]
     ```
+## Contributing
+
+Contributions as PRs are welcome. Discussion in the Issues section is probably a good idea before trying to get involved.
