@@ -8,6 +8,8 @@ import prelatex.lexer.ScannerLexer;
 import prelatex.lexer.Location;
 import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
+
+import static prelatex.Main.Disposition.DROP;
 import static prelatex.macros.MacroProcessor.LaTeXParams;
 
 import java.util.List;
@@ -68,6 +70,7 @@ public class NewCommand extends Macro {
                 throw new SemanticError("Macro body must be surrounded by braces", mp.peekToken().location);
             }
             List<Token> body = mp.parseMacroArg(Maybe.none());
+            if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
             Macro m = new LaTeXMacro(mname.name(), parameters.numArgs(), parameters.defaultArgs(), body);
             mp.define(name_s, m);
         } catch (EOF exc) {

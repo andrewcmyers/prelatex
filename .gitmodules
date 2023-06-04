@@ -1,3 +1,6 @@
 [submodule "easyIO"]
 	path = easyIO
 	url = git@github.com:andrewcmyers/easyIO.git
+[submodule "lwon"]
+	path = lwon
+	url = git@github.com:andrewcmyers/lwon.git

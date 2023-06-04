@@ -1,16 +1,28 @@
 package prelatex;
 
 import cms.util.maybe.Maybe;
+import easyIO.EOF;
+import lwon.data.Array;
+import lwon.data.DataObject;
+import lwon.data.Dictionary;
+import lwon.data.Dictionary.NotFound;
+import lwon.data.Text;
+import lwon.parse.Parser;
 import prelatex.lexer.ScannerLexer;
 import prelatex.macros.*;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import easyIO.Scanner;
 import java.util.*;
 
-import static prelatex.Main.PackageDisposition.DROP;
-import static prelatex.Main.PackageDisposition.EXPAND;
+
+import static cms.util.maybe.Maybe.none;
+import static cms.util.maybe.Maybe.some;
+import static prelatex.Main.Disposition.DROP;
+import static prelatex.Main.Disposition.EXPAND;
+import static prelatex.Main.Disposition.KEEP;
 
 public class Main {
     /** The core macro processing engine */
@@ -29,12 +41,17 @@ public class Main {
     PrintWriter outWriter;
 
     /** Whether to remove comments */
-    private boolean removeComments = false;
+    private boolean noComments = false;
 
-    /** How to handle packages used */
-    public enum PackageDisposition { EXPAND, KEEP, DROP }
+    /** How to handle packages and macro named.
+     *  EXPAND: read the package or expand the macro using its definition
+     *  KEEP: leave the package unread, or don't expand the macro even if the definition is known.
+     *  DROP: delete the use of the package or uses of the macro.
+     */
+    public enum Disposition { EXPAND, KEEP, DROP }
 
-    Map<String, PackageDisposition> packageDisposition = new HashMap<>();
+    private Map<String, Disposition> packageDisposition = new HashMap<>();
+    private Map<String, Disposition> macroDisposition = new HashMap<>();
 
     public static void main(String[] args) {
         try {
@@ -49,27 +66,30 @@ public class Main {
     }
 
     void usage() throws Exception {
-        throw new Exception("Usage: prelatex [--nocomments] [ --drop <pkg> ] ... [ --local <pkg> ] ...  <filename.tex> ...");
+        throw new Exception("Usage: prelatex [--nocomments] [--config <config file>] [ --drop <pkg> ] ... [ --expand <pkg> ] ...  <filename.tex> ...");
     }
 
     protected void parseArgs(String[] args) throws Exception {
         int optind = 0;
-        Maybe<String> outputFile = Maybe.none();
+        Maybe<String> outputFile = none();
         for (; optind < args.length; optind++) {
             String opt = args[optind];
             if (opt.codePointAt(0) != '-') break;
             if (opt.matches("^-o")) {
                 if (opt.length() == 2) {
-                    outputFile = Maybe.some(args[++optind]);
+                    outputFile = some(args[++optind]);
                 } else {
-                    outputFile = Maybe.some(args[++optind].substring(2));
+                    outputFile = some(args[++optind].substring(2));
                 }
-            } else if (opt.equals("--local")) {
+            } else if (opt.equals("--expand")) {
                 packageDisposition.put(args[++optind], EXPAND);
             } else if (opt.equals("--drop")) {
                 packageDisposition.put(args[++optind], DROP);
             } else if (opt.equals("--nocomments")) {
-                removeComments = true;
+                noComments = true;
+            } else if (opt.equals("--config")) {
+                String configFile = args[++optind];
+                processConfiguration(configFile);
             } else if (opt.equals("--")) {
                 optind++;
                 break;
@@ -92,12 +112,84 @@ public class Main {
             tex_inputs = Arrays.stream(System.getenv("TEXINPUTS").split(":")).toList();
     }
 
+    private void processConfiguration(String configFile) {
+        try {
+            Scanner scanner = new Scanner(configFile);
+            Parser lwonParser = new Parser(scanner);
+            DataObject data = lwonParser.parseDictionary(scanner.location());
+            if (data instanceof Dictionary config) {
+                try {
+                    List<DataObject> lst = config.get("nocomments");
+                    noComments = true;
+                } catch (NotFound e) {
+                    // skip
+                }
+                try {
+                    for (DataObject o : config.get("drop package")) {
+                        if (o instanceof Text name) packageDisposition.put(name.value(), DROP);
+                    }
+                } catch (NotFound e) {
+                    // skip
+                }
+                try {
+                    for (DataObject o : config.get("expand package")) {
+                        if (o instanceof Text name) packageDisposition.put(name.value(), EXPAND);
+                    }
+                } catch (NotFound e) {
+                    // skip
+                }
+                try {
+                    for (DataObject o : config.get("drop macro")) {
+                        if (o instanceof Text name) macroDisposition.put(name.value(), DROP);
+                    }
+                } catch (NotFound e) {
+                    // skip
+                }
+                try {
+                    for (DataObject o : config.get("keep macro")) {
+                        if (o instanceof Text name) macroDisposition.put(name.value(), KEEP);
+                    }
+                } catch (NotFound e) {
+                    // skip
+                }
+                try {
+                    for (DataObject o : config.get("TEXINPUTS")) {
+                        switch (o) {
+                            case Text t:
+                                tex_inputs = List.of(t.value());
+                                break;
+                            case Array a:
+                                tex_inputs = new LinkedList<>();
+                                for (DataObject o2 : a) {
+                                    if (o2 instanceof Text t) {
+                                        tex_inputs.add(t.value());
+                                    }
+                                }
+                                break;
+                            default:
+                                System.err.println("Bad directory in TEXINPUTS: " + o);
+                        }
+                    }
+                } catch (NotFound e) {
+                    // skip
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("Cannot open configuration file: " + e.getMessage());
+        } catch (Parser.SyntaxError e) {
+            System.err.println(e.getMessage());
+        } catch (EOF e) {
+            System.err.println("Configuration file " + configFile + " is empty.");
+        }
+    }
+
     private void initializeContext(MacroProcessor mp) {
         // builtin TeX macros
         mp.define("def", new Def());
         mp.define("let", new LetMacro());
         mp.define("input", new InputMacro());
         mp.define("relax", new NoopMacro("relax", 0));
+        mp.define("char", new CharMacro());
         mp.define("newif", new Newif());
         mp.define("ifx", new Ifx());
         mp.define("if", new IfEq());
@@ -123,11 +215,11 @@ public class Main {
     void run() {
         try {
             in = new ScannerLexer(inputFiles);
-            ProcessorOutput out = new CondensedOutput(outWriter, removeComments);
+            ProcessorOutput out = new CondensedOutput(outWriter, noComments);
             PrintWriter err = new PrintWriter(System.err, true);
             processor = new MacroProcessor(in, out, err, tex_inputs);
             initializeContext(processor);
-            processor.setPackageDisposition(packageDisposition);
+            processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {
             System.err.println(e1.getMessage());

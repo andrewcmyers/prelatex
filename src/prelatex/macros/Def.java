@@ -13,6 +13,8 @@ import prelatex.tokens.Token;
 import java.util.ArrayList;
 import java.util.List;
 
+import static prelatex.Main.Disposition.DROP;
+
 public class Def extends BuiltinMacro {
     public Def() {
         super("def", 2);
@@ -48,6 +50,7 @@ public class Def extends BuiltinMacro {
                 }
             }
             List<Token> body = mp.parseMacroArg(Maybe.none());
+            if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
             mp.define(name_s, new DefMacro(name_s, n, params, body));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);

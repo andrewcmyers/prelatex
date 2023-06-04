@@ -45,7 +45,8 @@ public class MacroProcessor {
      */
     Set<String> packagesRead = new HashSet<>();
 
-    Map<String, Main.PackageDisposition> packageDisposition;
+    Map<String, Main.Disposition> packageDisposition;
+    Map<String, Main.Disposition> macroDisposition;
 
     public MacroProcessor(Lexer lexer, ProcessorOutput out, PrintWriter err, List<String> searchPath) {
         this.out = out;
@@ -60,7 +61,10 @@ public class MacroProcessor {
     }
 
     void output(Token ...s) throws PrelatexError {
-        for (Token t : s) {
+        output(List.of(s));
+    }
+    void output(List<Token> lst) throws PrelatexError {
+        for (Token t : lst) {
             out.output(t);
         }
     }
@@ -144,8 +148,16 @@ public class MacroProcessor {
         }
     }
 
-    /** Expand the macro m, putting the tokens in delimiter (if any) after the expansion. */
+    /**
+     * Expand the macro m (if that is the disposition).
+     */
     void macroCall(MacroName m) throws PrelatexError {
+        switch (macroDisposition.get(m)) {
+            case KEEP: output(m); return;
+            case DROP:
+            case null:
+            case EXPAND: break;
+        }
         Macro binding;
         try {
             binding = lookup(m.name());
@@ -451,8 +463,10 @@ public class MacroProcessor {
         prependTokens(kept);
     }
 
-    public void setPackageDisposition(Map<String, Main.PackageDisposition> packageDisposition) {
+    public void setDispositions(Map<String, Main.Disposition> packageDisposition,
+                                Map<String, Main.Disposition> macroDisposition) {
         this.packageDisposition = packageDisposition;
+        this.macroDisposition = macroDisposition;
     }
 
     public Token[] stringToTokens(String pkgName, Location location) {

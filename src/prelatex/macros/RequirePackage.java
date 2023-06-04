@@ -4,12 +4,10 @@ import prelatex.PrelatexError;
 import prelatex.lexer.Location;
 import prelatex.tokens.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Arrays;
 
-import static prelatex.Main.PackageDisposition.DROP;
-import static prelatex.Main.PackageDisposition.EXPAND;
+import static prelatex.Main.Disposition.DROP;
+import static prelatex.Main.Disposition.EXPAND;
 
 /** The \input macro */
 public class RequirePackage extends LaTeXBuiltin {
@@ -23,6 +21,7 @@ public class RequirePackage extends LaTeXBuiltin {
             throws PrelatexError {
         assert arguments.size() == 2;
         // TODO do something with the options in argument 1
+        List<Token> options = arguments.get(0);
         String pkgArg = mp.flattenToString(arguments.get(1));
         String[] pkgs = pkgArg.split("\\s*,\\s*");
         for (String pkgName : pkgs) {
