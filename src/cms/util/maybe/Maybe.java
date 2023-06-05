@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  *  Java's Optional class but uses a fast checked exception instead of
  *  a slow unchecked exception.
  */
-public abstract class Maybe<T> implements Iterable<T>, Set<T> {
+public abstract class Maybe<T> implements Set<T> {
 
     /** Returns whether a value is contained in this {@code Maybe}.
      *  @return whether a value is contained. */

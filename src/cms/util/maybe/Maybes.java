@@ -77,12 +77,12 @@ class Maybes {
 
         @Override
         public boolean add(T t) {
-            return false;
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public boolean remove(Object o) {
-            return false;
+            throw new UnsupportedOperationException();
         }
 
         @Override
