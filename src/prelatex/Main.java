@@ -118,62 +118,38 @@ public class Main {
             Parser lwonParser = new Parser(scanner);
             DataObject data = lwonParser.parseDictionary(scanner.location());
             if (data instanceof Dictionary config) {
-                try {
-                    List<DataObject> lst = config.get("comments");
-                    if (!lst.isEmpty() && lst.get(0) instanceof Text t) {
-                        noComments = !Boolean.parseBoolean(t.value());
-                    }
-                } catch (NotFound e) {
-                    // skip
+                List<DataObject> lst = config.get("comments");
+                if (!lst.isEmpty() && lst.get(0) instanceof Text t) {
+                    noComments = !Boolean.parseBoolean(t.value());
                 }
-                try {
-                    for (DataObject o : config.get("drop package")) {
-                        if (o instanceof Text name) packageDisposition.put(name.value(), DROP);
-                    }
-                } catch (NotFound e) {
-                    // skip
+                for (DataObject o : config.get("drop package")) {
+                    if (o instanceof Text name) packageDisposition.put(name.value(), DROP);
                 }
-                try {
-                    for (DataObject o : config.get("expand package")) {
-                        if (o instanceof Text name) packageDisposition.put(name.value(), EXPAND);
-                    }
-                } catch (NotFound e) {
-                    // skip
+                for (DataObject o : config.get("expand package")) {
+                    if (o instanceof Text name) packageDisposition.put(name.value(), EXPAND);
                 }
-                try {
-                    for (DataObject o : config.get("drop macro")) {
-                        if (o instanceof Text name) macroDisposition.put(name.value(), DROP);
-                    }
-                } catch (NotFound e) {
-                    // skip
+                for (DataObject o : config.get("drop macro")) {
+                    if (o instanceof Text name) macroDisposition.put(name.value(), DROP);
                 }
-                try {
-                    for (DataObject o : config.get("keep macro")) {
-                        if (o instanceof Text name) macroDisposition.put(name.value(), KEEP);
-                    }
-                } catch (NotFound e) {
-                    // skip
+                for (DataObject o : config.get("keep macro")) {
+                    if (o instanceof Text name) macroDisposition.put(name.value(), KEEP);
                 }
-                try {
-                    for (DataObject o : config.get("TEXINPUTS")) {
-                        switch (o) {
-                            case Text t:
-                                tex_inputs = List.of(t.value());
-                                break;
-                            case Array a:
-                                tex_inputs = new LinkedList<>();
-                                for (DataObject o2 : a) {
-                                    if (o2 instanceof Text t) {
-                                        tex_inputs.add(t.value());
-                                    }
+                for (DataObject o : config.get("TEXINPUTS")) {
+                    switch (o) {
+                        case Text t:
+                            tex_inputs = List.of(t.value());
+                            break;
+                        case Array a:
+                            tex_inputs = new LinkedList<>();
+                            for (DataObject o2 : a) {
+                                if (o2 instanceof Text t) {
+                                    tex_inputs.add(t.value());
                                 }
-                                break;
-                            default:
-                                System.err.println("Bad directory in TEXINPUTS: " + o);
-                        }
+                            }
+                            break;
+                        default:
+                            System.err.println("Bad directory in TEXINPUTS: " + o);
                     }
-                } catch (NotFound e) {
-                    // skip
                 }
             }
         } catch (FileNotFoundException e) {

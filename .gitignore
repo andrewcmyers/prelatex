@@ -12,3 +12,6 @@ out/
 *.pdf
 .*.sw?
 .idea
+
+## Gradle
+.gradle
