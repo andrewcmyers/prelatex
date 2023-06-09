@@ -5,7 +5,6 @@ import easyIO.EOF;
 import lwon.data.Array;
 import lwon.data.DataObject;
 import lwon.data.Dictionary;
-import lwon.data.Dictionary.NotFound;
 import lwon.data.Text;
 import lwon.parse.Parser;
 import prelatex.lexer.ScannerLexer;
