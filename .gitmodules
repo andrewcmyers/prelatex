@@ -4,3 +4,6 @@
 [submodule "lwon"]
 	path = lwon
 	url = git@github.com:andrewcmyers/lwon.git
+[submodule "src/maybe"]
+	path = src/maybe
+	url = git@github.com:andrewcmyers/maybe.git
