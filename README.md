@@ -6,6 +6,7 @@ This tool converts LaTeX source(s) into a single equivalent LaTeX output file, w
 * \*def definitions
 * various conditionals (\newif, \ifx, \ifcase, etc.)
 * file read using \input
+* some more advanced constructs: \csname, \expandafter, ...
 
 External packages are not read and macros defined in them are not replaced. Macros defined in the file
 or in local packages are expanded according to their definitions.
