@@ -70,13 +70,20 @@ To build you can use Gradle:
 
 Then the script `bin/prelatex` can be used to run the program:
 
-    bin/prelatex myfile.tex
+    bin/prelatex myfile.tex ...
 
-Note that preLaTeX has a number of options for controlling how the file is interpreted.
+preLaTeX has a number of options for controlling how the file is interpreted. Typically, you
+will want a configuration file (the --config option) to define how to handle various packages. You may
+also want to define a prefix .tex file to override some of the definitions. So a typical invocation might
+look like:
 
-If you want to run the program inside IntellJ, the source code you need is
-found in the following directories, where the top-level directory is
-`prelatex`:
+    prelatex --config config.pltx overrides.tex top.tex
+
+### IntelliJ
+
+If you want to run the program inside IntellJ or another IDE, the source code
+you need is found in the following directories, where the top-level directory
+is `prelatex`:
 
     prelatex/src
     prelatex/easyIO/src

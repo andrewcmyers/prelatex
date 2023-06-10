@@ -115,7 +115,7 @@ public class Main {
         try {
             Scanner scanner = new Scanner(configFile);
             Parser lwonParser = new Parser(scanner);
-            DataObject data = lwonParser.parseDictionary(scanner.location());
+            DataObject data = lwonParser.parseDictionary();
             if (data instanceof Dictionary config) {
                 List<DataObject> lst = config.get("comments");
                 if (!lst.isEmpty() && lst.get(0) instanceof Text t) {
