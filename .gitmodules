@@ -5,5 +5,5 @@
 	path = lwon
 	url = git@github.com:andrewcmyers/lwon.git
 [submodule "src/maybe"]
-	path = src/maybe
+	path = maybe
 	url = git@github.com:andrewcmyers/maybe.git
