@@ -1,0 +1,13 @@
+#!/bin/bash
+
+file=`realpath $0`
+dir=`dirname $file`
+jar="${dir}/../build/libs/prelatex.jar"
+
+if [[ ! -r "${jar}" ]]
+then
+    echo "Cannot find JAR file ${jar}"
+    exit 2
+fi
+
+java --enable-preview -jar "${jar}" $*
