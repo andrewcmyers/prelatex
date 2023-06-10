@@ -46,11 +46,11 @@ The following options may be specified:
 
 - `drop macro: <name>`
 
-    Macro `name` is expanded to empty text.
-
+    Macro `name` is expanded to empty text rather than as defined.
+    
 - `keep macro: <name>`
 
-    This macro is not expanded even if its definition is known.
+    This macro is not expanded even if its definition is known. Its arguments are still expanded.
 
 - `TEXINPUTS <directory list>`
 
