@@ -4,6 +4,10 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.1'
 }
 
+if (JavaVersion.current() < JavaVersion.VERSION_17) {
+    throw new GradleException("Java 17 or higher is required to build this project")
+}
+
 repositories {
     mavenCentral()
 }
@@ -40,12 +44,6 @@ sourceSets {
 // Enable preview features
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["--enable-preview"]
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17) // replace with your version
-    }
 }
 
 task updateSubmodules(type: Exec) {
