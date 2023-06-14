@@ -6,6 +6,11 @@ jar="${dir}/../build/libs/prelatex.jar"
 
 if [[ ! -r "${jar}" ]]
 then
+    jar="/usr/local/share/prelatex/prelatex.jar"
+fi
+
+if [[ ! -r "${jar}" ]]
+then
     echo "Cannot find JAR file ${jar}"
     exit 2
 fi

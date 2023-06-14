@@ -60,3 +60,32 @@ shadowJar {
         attributes 'Main-Class': mainClassName
     }
 }
+
+run {
+    jvmArgs '--enable-preview'
+}
+
+task installDirectories {
+    mkdir '/usr/local/share'
+    mkdir '/usr/local/share/prelatex'
+    mkdir '/usr/local/bin'
+}
+
+task installJar(type: Copy) {
+    dependsOn installDirectories
+
+    from 'build/libs'
+    into '/usr/local/share/prelatex'
+    include 'prelatex.jar'
+}
+
+task installScript(type: Copy) {
+    from 'bin'
+    into '/usr/local/bin'
+    include 'prelatex'
+}
+
+task install {
+    dependsOn installScript
+    dependsOn installJar
+}

@@ -80,6 +80,9 @@ look like:
 
     prelatex --config config.pltx overrides.tex top.tex
 
+You can also install the prelatex script on your system by running `gradle install`. This needs to
+be run using `sudo` so the necessary files can be copied.
+
 ### IntelliJ
 
 If you want to run the program inside IntellJ or another IDE, the source code
