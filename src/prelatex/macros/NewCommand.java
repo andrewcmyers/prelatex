@@ -14,7 +14,12 @@ import static prelatex.macros.MacroProcessor.LaTeXParams;
 
 import java.util.List;
 
-/** \newcommand */
+/** This class implements the macros \newcommand, \renewcommand, and \providecommand.
+ *  Since we not reading all packages, we can't really get the semantics exactly right --
+ *  We don't know whether macros have been previously defined. In the case where
+ *  the macro *is* known to be defined, we do the right thing for \newcommand and
+ *  \providecommand. Otherwise, we muddle through as best we can.
+ */
 public class NewCommand extends Macro {
 
     public NewCommand() {
@@ -38,8 +43,8 @@ public class NewCommand extends Macro {
             }
             MacroName mname = (MacroName)nameTokens.get(0);
             String name_s = mname.name();
-            boolean dropDefn = false;
             // code above also appears in Def, sorry
+            boolean dropDefn = false;
             try {
                 mp.lookup(name_s);
                 switch (name) {
