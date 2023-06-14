@@ -104,7 +104,7 @@ public class Main {
         if (!outputFile.isPresent() || outputFile.get().equals("-")) {
             outWriter = new PrintWriter(System.out, true);
         } else {
-            outWriter = new PrintWriter(new FileOutputStream(outputFile.get(), true));
+            outWriter = new PrintWriter(new FileOutputStream(outputFile.get(), false));
         }
 
         if (System.getenv("TEXINPUTS") != null)
