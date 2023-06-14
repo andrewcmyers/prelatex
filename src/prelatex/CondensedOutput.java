@@ -29,7 +29,7 @@ public class CondensedOutput implements ProcessorOutput {
         } else {
             lastWasAlphaMacro = false;
             if (removeComments && t instanceof Separator && s.charAt(0) == '%') {
-                // out.print("");
+                out.print("%");
             } else {
                 out.print(s);
             }
