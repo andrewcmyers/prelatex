@@ -72,6 +72,7 @@ task installDirectories {
 }
 
 task installJar(type: Copy) {
+    dependsOn jar
     dependsOn installDirectories
 
     from 'build/libs'

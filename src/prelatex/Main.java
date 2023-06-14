@@ -1,6 +1,7 @@
 package prelatex;
 
 import cms.util.maybe.Maybe;
+import cms.util.maybe.NoMaybeValue;
 import easyIO.EOF;
 import lwon.data.Array;
 import lwon.data.DataObject;
@@ -34,6 +35,7 @@ public class Main {
     ScannerLexer in;
 
     /** Where to look for external files */
+    Files searchPath;
     List<String> tex_inputs = new ArrayList<>();
 
     /** Where output goes */
@@ -98,8 +100,6 @@ public class Main {
                 usage();
             }
         }
-        for (int i = optind; i < args.length; i++) inputFiles.add(args[i]);
-        if (inputFiles.isEmpty()) usage();
 
         if (!outputFile.isPresent() || outputFile.get().equals("-")) {
             outWriter = new PrintWriter(System.out, true);
@@ -109,6 +109,17 @@ public class Main {
 
         if (System.getenv("TEXINPUTS") != null)
             tex_inputs = Arrays.stream(System.getenv("TEXINPUTS").split(":")).toList();
+
+        searchPath = new Files(tex_inputs);
+        for (int i = optind; i < args.length; i++) {
+            Maybe<String> f = searchPath.findFile(args[i], List.of("", ".tex"));
+            try {
+                inputFiles.add(f.get());
+            } catch (NoMaybeValue e) {
+                System.err.println("File not found: " + args[i]);
+            }
+        }
+        if (inputFiles.isEmpty()) usage();
     }
 
     private void processConfiguration(String configFile) {
@@ -194,7 +205,7 @@ public class Main {
             in = new ScannerLexer(inputFiles);
             ProcessorOutput out = new CondensedOutput(outWriter, noComments);
             PrintWriter err = new PrintWriter(System.err, true);
-            processor = new MacroProcessor(in, out, err, tex_inputs);
+            processor = new MacroProcessor(in, out, err, searchPath);
             initializeContext(processor);
             processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
