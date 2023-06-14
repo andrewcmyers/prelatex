@@ -38,7 +38,7 @@ public class Files {
      *  in the file system. */
     private Maybe<String> findFileExt(String base, String filename, List<String> extensions) {
         for (String ext : extensions) {
-            if (base.isEmpty()) base = System.getProperty("user.dir");
+            if (base.isEmpty() && !new File(filename).isAbsolute()) base = System.getProperty("user.dir");
             File rel = new File(base, filename + ext);
             if (rel.canRead()) return some(rel.toString());
         }
