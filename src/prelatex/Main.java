@@ -112,7 +112,7 @@ public class Main {
 
         searchPath = new Files(tex_inputs);
         for (int i = optind; i < args.length; i++) {
-            Maybe<String> f = searchPath.findFile(args[i], List.of("", ".tex"));
+            Maybe<String> f = searchPath.findFile(args[i], List.of(".tex"));
             try {
                 inputFiles.add(f.get());
             } catch (NoMaybeValue e) {

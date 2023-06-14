@@ -8,6 +8,9 @@ import java.util.List;
 
 import static cms.util.maybe.Maybe.some;
 
+/** This class encapsulates the way that the macro processor finds files,
+ * using a search path.
+ */
 public class Files {
 
     List<String> searchPath;
