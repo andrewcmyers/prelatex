@@ -38,6 +38,7 @@ public class NewCommand extends Macro {
             }
             MacroName mname = (MacroName)nameTokens.get(0);
             String name_s = mname.name();
+            boolean dropDefn = false;
             // code above also appears in Def, sorry
             try {
                 mp.lookup(name_s);
@@ -46,6 +47,9 @@ public class NewCommand extends Macro {
                         throw new SemanticError("Macro \\" + name_s + " already defined", location);
                     case "renewcommand":
                         break;
+                    case "providecommand":
+                        dropDefn = true;
+                        break; // already defined
                     default:
                         throw new Error("huh?");
                 }
@@ -53,6 +57,7 @@ public class NewCommand extends Macro {
                 switch (name) {
                     case "newcommand": break;
                     case "renewcommand": break; // might be defined already, who knows?
+                    case "providecommand": break;
                     default:
                         throw new Error("huh?");
                 }
@@ -71,8 +76,10 @@ public class NewCommand extends Macro {
             }
             List<Token> body = mp.parseMacroArg(Maybe.none());
             if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
-            Macro m = new LaTeXMacro(mname.name(), parameters.numArgs(), parameters.defaultArgs(), body);
-            mp.define(name_s, m);
+            if (!dropDefn) {
+                Macro m = new LaTeXMacro(mname.name(), parameters.numArgs(), parameters.defaultArgs(), body);
+                mp.define(name_s, m);
+            }
         } catch (EOF exc) {
             throw new ScannerLexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
         }
