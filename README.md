@@ -2,7 +2,7 @@
 
 This tool converts LaTeX source(s) into a single equivalent LaTeX output file, while removing various constructs by expanding them:
 
-* \newcommand definitions
+* \newcommand and \newenvironment definitions
 * \*def definitions
 * various conditionals (\newif, \ifx, \ifcase, etc.)
 * file read using \input
