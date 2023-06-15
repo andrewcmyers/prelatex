@@ -15,7 +15,7 @@ public class IfBool extends LaTeXBuiltin {
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws MacroProcessor.SemanticError {
         String ifname = mp.flattenToString(arguments.get(0));
-        boolean b = mp.testCondition("\\if" + ifname);
+        boolean b = mp.testCondition(ifname);
         mp.prependTokens(arguments.get(b ? 1 : 2));
     }
 }

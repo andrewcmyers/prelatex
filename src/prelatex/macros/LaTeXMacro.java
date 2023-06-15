@@ -1,15 +1,8 @@
 package prelatex.macros;
 
-import static cms.util.maybe.Maybe.none;
-import static cms.util.maybe.Maybe.some;
-import easyIO.EOF;
-import prelatex.PrelatexError;
 import prelatex.lexer.Location;
-import prelatex.macros.MacroProcessor.SemanticError;
-import prelatex.tokens.CharacterToken;
 import prelatex.tokens.Token;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /** A LaTeX-syntax macro with user-defined behavior. Macro type 1B per Macro.java */

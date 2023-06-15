@@ -57,6 +57,13 @@ public class MacroProcessor {
     Map<String, Disposition> packageDisposition;
     Map<String, Disposition> macroDisposition;
 
+    /** Create a macro processor instance.
+     *
+     * @param lexer The source of input tokens
+     * @param out The place where output is sent
+     * @param err The place where error messages are sent
+     * @param searchPath The place to look for named files (packages, included files)
+     */
     public MacroProcessor(Lexer lexer, ProcessorOutput out, PrintWriter err, Files searchPath) {
         this.out = out;
         this.err = err;
@@ -189,8 +196,12 @@ public class MacroProcessor {
     }
 
     /** Skip past tokens that TeX considers 'blank' */
-    void skipBlanks() throws EOF, LexicalError {
-        while (peekToken().isBlank()) nextToken();
+    void skipBlanks() throws LexicalError {
+        try {
+            while (peekToken().isBlank()) nextToken();
+        } catch (EOF e) {
+            // ignore
+        }
     }
 
     /** Get the next token that is not blank. */
@@ -552,8 +563,24 @@ public class MacroProcessor {
         }
     }
 
+    /** Find the named file in the standard way. */
     public Maybe<String> findFile(String filename, List<String> exts) {
         return files.findFile(filename, exts);
+    }
+
+    /**  Skip the next token if it is an asterisk and return true if so. */
+    public boolean skipStar() throws LexicalError {
+        try {
+            skipBlanks();
+            if (peekToken() instanceof CharacterToken c && c.codepoint() == '*') {
+                nextToken();
+                return true;
+            } else {
+                return false;
+            }
+        } catch (EOF e) {
+            return false;
+        }
     }
 
     public record LaTeXParams(int numArgs, List<List<Token>> defaultArgs) { }

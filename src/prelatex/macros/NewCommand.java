@@ -51,6 +51,7 @@ public class NewCommand extends Macro {
                     case "newcommand":
                         throw new SemanticError("Macro \\" + name_s + " already defined", location);
                     case "renewcommand":
+                    case "DeclareRobustCommand":
                         break;
                     case "providecommand":
                         dropDefn = true;
@@ -59,13 +60,7 @@ public class NewCommand extends Macro {
                         throw new Error("huh?");
                 }
             } catch (Namespace.LookupFailure e) {
-                switch (name) {
-                    case "newcommand": break;
-                    case "renewcommand": break; // might be defined already, who knows?
-                    case "providecommand": break;
-                    default:
-                        throw new Error("huh?");
-                }
+                // Just because we can't find it doesn't mean it isn't defined already.
             }
             mp.skipBlanks();
             if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '*') {

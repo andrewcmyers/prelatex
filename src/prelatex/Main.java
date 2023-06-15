@@ -187,6 +187,7 @@ public class Main {
         mp.define("expandafter", new ExpandAfter());
         // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
+        mp.define("DeclareRobustCommand", new RenewCommand());
         mp.define("providecommand", new ProvideCommand());
         mp.define("renewcommand", new RenewCommand());
         mp.define("newenvironment", new NewEnvironment());
