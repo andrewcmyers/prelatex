@@ -72,6 +72,10 @@ Then the script `bin/prelatex` can be used to run the program:
 
     bin/prelatex myfile.tex ...
 
+If when building you get an error like "preview language features are only
+supported for release 20", edit build.gradle and change the number 17 to 20 (or
+whatever version is reported). You need to have at least version 17, however.
+
 preLaTeX has a number of options for controlling how the file is interpreted. Typically, you
 will want a configuration file (the --config option) to define how to handle various packages. You may
 also want to define a prefix .tex file to override some of the definitions. So a typical invocation might
