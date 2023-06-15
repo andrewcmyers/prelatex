@@ -7,10 +7,10 @@ import prelatex.tokens.Token;
 
 import java.util.List;
 
-public class DeclareOption extends LaTeXMacro {
+public class DeclareOption extends StarredBuiltin {
 
     public DeclareOption() {
-        super("DeclareOption", 2, List.of(), List.of());
+        super("DeclareOption", 2, List.of());
     }
 
     @Override
