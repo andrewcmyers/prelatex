@@ -185,7 +185,7 @@ public class Main {
         mp.define("ifcase", new IfCase());
         mp.define("csname", new CSName());
         mp.define("expandafter", new ExpandAfter());
-       // builtin LaTeX macros
+        // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
         mp.define("providecommand", new ProvideCommand());
         mp.define("renewcommand", new RenewCommand());
@@ -196,7 +196,9 @@ public class Main {
         mp.define("usepackage", new RequirePackage("usepackage"));
         mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
         mp.define("IfFileExists", new IfFileExists());
-       // standardish macros from LaTeX packages like etoolbox
+        mp.define("DeclareOption", new DeclareOption());
+        mp.define("ProcessOptions", new ProcessOptions());
+        // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
     }
 

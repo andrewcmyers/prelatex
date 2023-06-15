@@ -34,6 +34,8 @@ public class RequirePackage extends LaTeXBuiltin {
                     outputIncludes(mp, name, includes, arguments.get(0), location);
                     includes.clear();
                 }
+                mp.define("package options",
+                    new LaTeXMacro("package options", 0, List.of(), arguments.get(0)));
                 mp.includeFile(arguments.get(1), List.of(".sty"), location);
             } else {
                 if (mp.packageDisposition.get(pkgName) != DROP) {
