@@ -12,8 +12,12 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import static prelatex.lexer.ScannerLexer.CatCode.*;
 
 public class ScannerLexer implements Lexer {
     static final boolean DEBUG_LEXING = false;
@@ -22,6 +26,52 @@ public class ScannerLexer implements Lexer {
 
     enum LexerMode { N, M, S } // XXX this should be implemented more fully and correctly
     LexerMode mode;
+
+    enum CatCode {
+        ESCAPE, // 0 (\)
+        BEGIN, // 1 ({)
+        END, // 2 (})
+        MATH, // 3 ($)
+        ALIGN, // 4 (&)
+        NEWLINE, // 5 (\n)
+        PARAMETER, // 6 (#)
+        SUPERSCRIPT, // 7 (^)
+        SUBSCRIPT, // 8 (_)
+        IGNORED, // 9 (\0)
+        SPACE, // 10 ( )
+        LETTER, // 11 (a-z, A-Z)
+        OTHER, // 12
+        ACTIVE, // 13 (~)
+        COMMENT, // 14 (%)
+        INVALID // 15
+    }
+
+    CatCode[] catcodes = {
+        ESCAPE, BEGIN, END, MATH, ALIGN, NEWLINE, PARAMETER,
+        SUPERSCRIPT, SUBSCRIPT, IGNORED, SPACE, LETTER, OTHER, ACTIVE,
+        COMMENT, INVALID
+    };
+    static CatCode[] charCatcodes = new CatCode[256];
+    static {
+        for (int i = 0; i <= 255; i++) {
+            charCatcodes[i] = OTHER;
+        }
+        charCatcodes['\\'] = ESCAPE;
+        charCatcodes['{'] = BEGIN;
+        charCatcodes['}'] = END;
+        charCatcodes['$'] = MATH;
+        charCatcodes['&'] = ALIGN;
+        charCatcodes['\n'] = NEWLINE;
+        charCatcodes['#'] = PARAMETER;
+        charCatcodes[]
+        for (int i = 'A'; i <= 'Z'; i++) {
+            charCatcodes[i] = LETTER;
+        }
+        for (int i = 'a'; i <= 'z'; i++) {
+            charCatcodes[i] = LETTER;
+        }
+    }
+
 
     public ScannerLexer(List<String> filenames) throws FileNotFoundException {
         LinkedList<String> reversed = new LinkedList<>();
