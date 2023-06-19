@@ -546,20 +546,39 @@ public class MacroProcessor {
                 .toArray(Token[]::new);
     }
 
+    /** Parse a legal macro name, including the initial backslash */
+    public String parseMacroName(Location location) throws PrelatexError {
+        try {
+            skipBlanks();
+            Token t = peekToken();
+            List<Token> nameTokens = parseMacroArg(Maybe.none());
+            if (nameTokens.size() == 1 && nameTokens.get(0) instanceof MacroName mname) {
+                return mname.name();
+            }
+            throw new PrelatexError("Invalid macro name : " + flattenToString(nameTokens), t.location);
+        } catch (EOF e) {
+            throw new PrelatexError("Unexpected end of input, expecting macro name", location);
+        }
+
+    }
     /** Parse a string of legal macro name characters */
-    public String parseMacroName(Location location) throws LexicalError {
+    public String parseLongMacroName(Location location) throws LexicalError {
         try {
             StringBuilder b = new StringBuilder();
             skipBlanks();
             for (;;) {
                 Token t = peekToken();
-                switch (t) {
-                    case CharacterToken c:
-                        nextToken();
-                        b.appendCodePoint(c.codepoint());
-                        break;
-                    default:
-                        return b.toString();
+                if (t instanceof CharacterToken c) {
+                    try {
+                        if (catcodes.lookup(c.chars()).equals(LETTER)) {
+                            nextToken();
+                            b.appendCodePoint(c.codepoint());
+                        }
+                    } catch (Namespace.LookupFailure e) {
+                        return b.toString(); // not a letter
+                    }
+                } else {
+                    return b.toString();
                 }
             }
         } catch (EOF e) {
@@ -633,8 +652,7 @@ public class MacroProcessor {
         try {
             List<Token> result = new ArrayList<>();
             for (;;) {
-                Token d = null;
-                d = peekToken();
+                Token d = peekToken();
                 if (d instanceof CharacterToken c) {
                     nextToken();
                     if (Character.isDigit(c.codepoint())) {
@@ -664,7 +682,7 @@ public class MacroProcessor {
         }
     }
 
-    private LinkedList<Token> prologue = new LinkedList<>();
+    private final LinkedList<Token> prologue = new LinkedList<>();
     /** Remember these tokens as things that should happen at the begining of the document */
     public void atBeginDocument(List<Token> tokens) {
         prologue.addAll(tokens);

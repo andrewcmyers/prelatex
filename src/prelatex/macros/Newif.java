@@ -18,11 +18,11 @@ public class Newif extends LaTeXBuiltin {
         if (arguments.get(0).size() != 1) {
             throw new SemanticError("\\newif requires a single macro token as an argument", location);
         }
-        Token ifname = arguments.get(0).get(0);
-        if (ifname instanceof MacroName m) {
-            String s = ifname.toString();
+        Token ifName = arguments.get(0).get(0);
+        if (ifName instanceof MacroName m) {
+            String s = ifName.toString();
             if (!s.matches("^\\\\if.*$")) {
-                throw new SemanticError("\\newif requires an argument starting with \\if", ifname.location);
+                throw new SemanticError("\\newif requires an argument starting with \\if", ifName.location);
             }
             String condition = s.substring(3);
             mp.define(m.name(), new IfCommand(condition));
@@ -32,7 +32,7 @@ public class Newif extends LaTeXBuiltin {
             mp.define(condition + "false",
                 new SimpleCommand(condition + "false", mp1 -> mp1.setConditionFalse(condition)));
         } else {
-            throw new SemanticError("\\newif requires a single macro token as an argument", ifname.location);
+            throw new SemanticError("\\newif requires a single macro token as an argument", ifName.location);
         }
     }
 }

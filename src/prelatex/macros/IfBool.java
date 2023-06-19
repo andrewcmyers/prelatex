@@ -1,6 +1,5 @@
 package prelatex.macros;
 
-import prelatex.Namespace;
 import prelatex.lexer.Location;
 import prelatex.tokens.Token;
 
@@ -14,8 +13,8 @@ public class IfBool extends LaTeXBuiltin {
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws MacroProcessor.SemanticError {
-        String ifname = mp.flattenToString(arguments.get(0));
-        boolean b = mp.testCondition(ifname);
+        String ifName = mp.flattenToString(arguments.get(0));
+        boolean b = mp.testCondition(ifName);
         mp.prependTokens(arguments.get(b ? 1 : 2));
     }
 }

@@ -2,7 +2,6 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
-import prelatex.tokens.CharacterToken;
 import prelatex.tokens.Token;
 
 import java.util.List;
@@ -17,6 +16,12 @@ public class StarredBuiltin extends LaTeXBuiltin {
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         boolean star = mp.skipStar();
         List<List<Token>> arguments = mp.parseLaTeXArguments(numArgs, defaultArgs, location);
+        applyArguments(arguments, mp, location, star);
+    }
+
+    protected void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location, boolean ignored)
+            throws PrelatexError
+    {
         applyArguments(arguments, mp, location);
     }
 }

@@ -1,6 +1,5 @@
 package prelatex.macros;
 
-import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
 

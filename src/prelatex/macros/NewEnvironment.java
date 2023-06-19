@@ -1,6 +1,5 @@
 package prelatex.macros;
 
-import cms.util.maybe.Maybe;
 import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Lexer;
@@ -27,7 +26,7 @@ public class NewEnvironment extends Macro {
             if (!(t instanceof OpenBrace)) {
                 throw new SemanticError("\\newenvironment must be followed by open brace", location);
             }
-            String name = mp.parseMacroName(t.location);
+            String name = mp.parseLongMacroName(t.location);
             mp.skipBlanks();
             if (name.isEmpty()) {
                 throw new SemanticError("\\newenvironment name must be nonempty", location);

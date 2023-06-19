@@ -3,11 +3,9 @@ package prelatex.macros;
 import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.macros.MacroProcessor.SemanticError;
 import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
-import prelatex.macros.MacroProcessor.SemanticError;
-
-import java.util.LinkedList;
 
 public class ExpandAfter extends Macro {
     public ExpandAfter() {

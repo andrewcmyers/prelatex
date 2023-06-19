@@ -3,16 +3,11 @@ package prelatex.macros;
 import easyIO.EOF;
 import prelatex.Namespace;
 import prelatex.PrelatexError;
+import prelatex.lexer.Lexer.LexicalError;
 import prelatex.lexer.Location;
 import prelatex.tokens.*;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static cms.util.maybe.Maybe.some;
-import static prelatex.macros.MacroProcessor.SemanticError;
-
-import prelatex.lexer.Lexer.LexicalError;
 
 public class Begin extends Macro {
     public Begin() {
@@ -28,7 +23,7 @@ public class Begin extends Macro {
                 throw new LexicalError("\\begin expects environment name in braces", open.location);
             }
             Location envLoc = mp.peekToken().location;
-            String env = mp.parseMacroName(location);
+            String env = mp.parseLongMacroName(location);
             Token close = mp.nextNonblankToken();
             if (!(close instanceof CloseBrace)) {
                 throw new LexicalError("\\begin expects environment name in braces", close.location);

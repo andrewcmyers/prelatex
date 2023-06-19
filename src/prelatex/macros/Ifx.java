@@ -23,15 +23,12 @@ public class Ifx extends Conditional {
             mp.skipBlanks();
             Token t2 = mp.nextToken();
             boolean comparison = false;
-            switch (t1) {
-                case MacroName m1:
-                    if (t2 instanceof MacroName m2) {
-                        comparison = compareMacros(m1, m2, mp);
-                    }
-                    break;
-                default:
-                    comparison = t1.chars().equals(t2.chars());
-                    break;
+            if (t1 instanceof MacroName m1) {
+                if (t2 instanceof MacroName m2) {
+                    comparison = compareMacros(m1, m2, mp);
+                }
+            } else {
+                comparison = t1.chars().equals(t2.chars());
             }
             mp.applyConditional(comparison, location);
         } catch (EOF exc) {
@@ -40,7 +37,7 @@ public class Ifx extends Conditional {
     }
 
     private boolean compareMacros(MacroName m1, MacroName m2, MacroProcessor mp) {
-        if (m1.name().equals(m2)) {
+        if (m1.name().equals(m2.name())) {
             return true;
         } else {
             try {

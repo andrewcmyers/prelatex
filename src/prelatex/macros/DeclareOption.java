@@ -16,12 +16,12 @@ public class DeclareOption extends StarredBuiltin {
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) {
-        List<Token> options = new ArrayList<>();
+        List<Token> options;
         List<Token> optionName = arguments.get(0);
         List<Token> action = arguments.get(1);
         try {
             LaTeXMacro m = (LaTeXMacro) mp.lookup("declared options");
-            options.addAll(m.body);
+            options = new ArrayList<>(m.body);
             options.add(new CharacterToken(',', location));
             options.addAll(optionName);
         } catch (Namespace.LookupFailure e) {

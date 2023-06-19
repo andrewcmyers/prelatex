@@ -5,7 +5,6 @@ import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
 import prelatex.macros.MacroProcessor.SemanticError;
-import prelatex.tokens.MacroName;
 import prelatex.tokens.MacroParam;
 import prelatex.tokens.OpenBrace;
 import prelatex.tokens.Token;
@@ -23,29 +22,20 @@ public class Def extends BuiltinMacro {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
-            mp.skipBlanks();
-            Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMacroArg(Maybe.none());
-            if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
-                throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
-                        t.location);
-            }
-            Token mname = nameTokens.get(0);
-            String name_s = ((MacroName)mname).name();
-            // code above also appears in NewCommand, sorry
+            String name_s = mp.parseMacroName(location);
             List<Token> params = new ArrayList<>();
             int n = 0;
             while (!(mp.peekToken() instanceof OpenBrace)) {
-                t = mp.nextToken();
+                Token t = mp.nextToken();
                 params.add(t);
                 if (t instanceof MacroParam p) {
                     Token num = p.token();
                     try {
                         int i = Integer.parseInt(num.chars());
                         if (i == n + 1) n++;
-                        else throw new SemanticError("Macro parameters must increase sequentially", num.location);
+                        else throw new PrelatexError("Macro parameters must increase sequentially", num.location);
                     } catch (NumberFormatException exc) {
-                        throw new SemanticError("Macro parameters must be numbers", num.location);
+                        throw new PrelatexError("Macro parameters must be numbers", num.location);
                     }
                 }
             }

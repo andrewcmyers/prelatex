@@ -29,7 +29,7 @@ public class CSName extends Macro {
             ArrayList<Token> tokens = new ArrayList<>();
             collectTokens: for (;;) { Token t = mp.nextNonblankToken();
                 switch (t) {
-                    case Separator s:
+                    case Separator ignored:
                         break;
                     case MacroName m:
                         if (m.name().equals("endcsname")) break collectTokens;
@@ -44,7 +44,7 @@ public class CSName extends Macro {
                         }
                         mp.reportError("Invalid token in \\csname: " + t, location);
                         break;
-                    case CharacterToken c:
+                    case CharacterToken ignored2:
                         tokens.add(t);
                         break;
                     default:

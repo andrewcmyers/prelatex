@@ -7,9 +7,6 @@ import prelatex.lexer.Location;
 import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
 
-import java.util.LinkedList;
-import java.util.Set;
-
 public class IfDefined extends Conditional {
     public IfDefined() {
         super("ifdefined");

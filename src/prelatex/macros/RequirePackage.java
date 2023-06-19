@@ -22,16 +22,15 @@ public class RequirePackage extends LaTeXBuiltin {
             throws PrelatexError {
         assert arguments.size() == 2;
         // TODO do something with the options in argument 1
-        List<Token> options = arguments.get(0);
         String pkgArg = mp.flattenToString(arguments.get(1));
-        String[] pkgs = pkgArg.split("\\s*,\\s*");
+        String[] packages = pkgArg.split("\\s*,\\s*");
         List<String> includes = new ArrayList<>();
-        for (String pkgName : pkgs) {
+        for (String pkgName : packages) {
             if (mp.packageDisposition.get(pkgName) == EXPAND &&
                     !mp.packagesRead.contains(pkgName)) {
                 mp.packagesRead.add(pkgName);
                 if (!includes.isEmpty()) {
-                    outputIncludes(mp, name, includes, arguments.get(0), location);
+                    outputIncludes(mp, includes, arguments.get(0), location);
                     includes.clear();
                 }
                 mp.define("package options",
@@ -44,15 +43,15 @@ public class RequirePackage extends LaTeXBuiltin {
             }
         }
         if (!includes.isEmpty()) {
-            outputIncludes(mp, name, includes, arguments.get(0), location);
+            outputIncludes(mp, includes, arguments.get(0), location);
         }
     }
 
-    private void outputIncludes(MacroProcessor mp, String macroName, List<String> includes, List<Token> arguments, Location location) throws PrelatexError {
+    private void outputIncludes(MacroProcessor mp, List<String> includes, List<Token> arguments, Location location) throws PrelatexError {
         mp.output(new MacroName(name, location));
         if (arguments.size() > 0) {
             mp.output(new CharacterToken('[', location));
-            mp.output(arguments.toArray(n -> new Token[n]));
+            mp.output(arguments.toArray(Token[]::new));
             mp.output(new CharacterToken(']', location));
         }
         mp.output(new OpenBrace(location));

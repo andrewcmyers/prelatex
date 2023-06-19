@@ -34,16 +34,7 @@ public class NewCommand extends Macro {
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             boolean longdef = true; // TODO: actually enforce this
-            mp.skipBlanks();
-            Token t = mp.peekToken();
-            List<Token> nameTokens = mp.parseMacroArg(Maybe.none());
-            if (nameTokens.size() != 1 || !(nameTokens.get(0) instanceof MacroName)) {
-                throw new SemanticError("Invalid macro name in " + this.name + ": " + mp.flattenToString(nameTokens),
-                        t.location);
-            }
-            MacroName mname = (MacroName)nameTokens.get(0);
-            String name_s = mname.name();
-            // code above also appears in Def, sorry
+            String name_s = mp.parseMacroName(location);
             boolean dropDefn = false;
             try {
                 mp.lookup(name_s);
@@ -77,7 +68,7 @@ public class NewCommand extends Macro {
             List<Token> body = mp.parseMacroArg(Maybe.none());
             if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
             if (!dropDefn) {
-                Macro m = new LaTeXMacro(mname.name(), parameters.numArgs(), parameters.defaultArgs(), body);
+                Macro m = new LaTeXMacro(name_s, parameters.numArgs(), parameters.defaultArgs(), body);
                 mp.define(name_s, m);
             }
         } catch (EOF exc) {

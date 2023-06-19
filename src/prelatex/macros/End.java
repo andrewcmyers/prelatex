@@ -15,10 +15,10 @@ public class End extends LaTeXBuiltin {
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws PrelatexError {
         String s = mp.flattenToString(arguments.get(0));
-        MacroName endname = new MacroName("end" + s, location);
+        MacroName endName = new MacroName("end" + s, location);
         try {
-            if (mp.lookup(endname) instanceof LaTeXMacro) {
-                mp.prependTokens(endname);
+            if (mp.lookup(endName) instanceof LaTeXMacro) {
+                mp.prependTokens(endName);
                 return;
             }
             // wrong kind of macro, fall through

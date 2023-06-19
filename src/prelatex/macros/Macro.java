@@ -2,7 +2,6 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
-import prelatex.tokens.Token;
 
 /** Macros may be:
  * 1. user-defined macros introduced by \newcommand or \def, \gdef, etc., for which there is

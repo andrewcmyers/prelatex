@@ -39,8 +39,8 @@ public class IfEq extends Conditional {
             assert tokens.size() == 2;
             Token t1 = tokens.get(0), t2 = tokens.get(1);
             switch (t1) {
-                case MacroName m1:
-                    if (t2 instanceof MacroName m2) {
+                case MacroName ignored:
+                    if (t2 instanceof MacroName ignored1) {
                         comparison = true;
                     }
                     break;
@@ -49,13 +49,13 @@ public class IfEq extends Conditional {
                             c1.codepoint() == c2.codepoint())
                        comparison = true;
                     break;
-                case Separator s1:
+                case Separator ignored3:
                     if (t2 instanceof Separator) comparison = true;
                     break;
-                case OpenBrace b1:
+                case OpenBrace ignored4:
                     if (t2 instanceof OpenBrace) comparison = true;
                     break;
-                case CloseBrace b1:
+                case CloseBrace ignored5:
                     if (t2 instanceof CloseBrace) comparison = true;
                     break;
                 case MacroParam p1:

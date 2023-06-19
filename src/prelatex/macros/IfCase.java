@@ -41,7 +41,7 @@ public class IfCase extends Conditional {
                             }
                         } catch (Namespace.LookupFailure e) {
                             throw new SemanticError("Unexpandable macro " +
-                                m.toString() + " in \\ifcase expression", m.location);
+                                m + " in \\ifcase expression", m.location);
                         }
                         break;
                     case CharacterToken c:
@@ -56,23 +56,23 @@ public class IfCase extends Conditional {
                         mp.prependTokens(List.of(t));
                         break collectTokens;
                 }
-                String numstr = mp.flattenToString(tokens);
+                String numStr = mp.flattenToString(tokens);
                 try {
-                    num = Integer.parseInt(numstr);
+                    num = Integer.parseInt(numStr);
                 } catch (NumberFormatException exc) {
                     num = -1;
                 }
                 if (num < 0) {
-                    throw new SemanticError("Illegal number " + numstr + " in \\ifcase", location);
+                    throw new SemanticError("Illegal number " + numStr + " in \\ifcase", location);
                 }
             }
             LinkedList<Token> selected = new LinkedList<>();
             for (int i = 0; ; i++) {
                 Token delim;
-                LinkedList<Token> casei = mp.parseMatched(Set.of(mp.fi, orToken));
-                delim = casei.removeLast();
+                LinkedList<Token> case_i = mp.parseMatched(Set.of(MacroProcessor.fi, orToken));
+                delim = case_i.removeLast();
                 if (i == num) {
-                    selected = casei;
+                    selected = case_i;
                 }
                 if (delim instanceof MacroName && delim.toString().equals("\\fi")) break;
             }
