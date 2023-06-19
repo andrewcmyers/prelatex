@@ -14,7 +14,7 @@ public class CondensedOutput implements ProcessorOutput {
     private boolean lastWasAlphaMacro = false;
 
     private ArrayList<Token> outputLog; // null if debugging turned off
-    private static boolean DEBUG_OUTPUT = true;
+    private static boolean DEBUG_OUTPUT = false;
 
     CondensedOutput(PrintWriter out, boolean removeComments) {
         this.out = out;
@@ -28,7 +28,7 @@ public class CondensedOutput implements ProcessorOutput {
         if (Character.isAlphabetic(s.charAt(0)) && lastWasAlphaMacro) {
             out.print(' ');
         }
-        if (Character.isWhitespace(s.charAt(0)) && lastWasAlphaMacro) {
+        if (' ' == s.charAt(0) && lastWasAlphaMacro) {
             out.print("{}"); // prevent previous macro from eating real whitespace
         }
         if (t instanceof MacroName) {
