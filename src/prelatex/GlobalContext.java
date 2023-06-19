@@ -42,6 +42,8 @@ public class GlobalContext {
         mp.define("ProcessOptions", new ProcessOptions());
         mp.define("AtBeginDocument", new AtBeginDocument());
         mp.define("AtEndDocument", new AtEndDocument());
+        mp.define("protect", new NoopMacro("protect", 0));
+        mp.define("relax", new NoopMacro("relax", 0));
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
     }
