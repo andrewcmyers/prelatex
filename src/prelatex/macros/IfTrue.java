@@ -15,12 +15,7 @@ public class IfTrue extends Conditional {
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        try {
-            LinkedList<Token> tokens = mp.parseMatched(Set.of(mp.fi));
-            tokens.removeLast(); // fi
-            mp.prependTokens(tokens);
-        } catch (EOF e) {
-            throw new PrelatexError("Unexpected end of input in \\iffalse", location);
-        }
+        MacroProcessor.thenElse thenElse = mp.parseThenElse(location);
+        mp.prependTokens(thenElse.thenClause());
     }
 }

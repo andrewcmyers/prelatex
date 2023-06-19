@@ -15,10 +15,7 @@ public class IfFalse extends Conditional {
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        try {
-            mp.parseMatched(Set.of(mp.fi));
-        } catch (EOF e) {
-            throw new PrelatexError("Unexpected end of input in \\iffalse", location);
-        }
+        MacroProcessor.thenElse thenElse = mp.parseThenElse(location);
+        mp.prependTokens(thenElse.elseClause());
     }
 }

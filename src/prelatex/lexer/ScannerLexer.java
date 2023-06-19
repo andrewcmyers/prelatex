@@ -155,6 +155,7 @@ public class ScannerLexer implements Lexer {
             // should handle ^^ character escapes
             case INVALID: throw new LexicalError("Invalid character " + c, new ScannerLocn(location));
             case ACTIVE: return new ActiveCharMacro(nextChar(), new ScannerLocn(location));
+            case MATH: return parseMathMode();
             default:
                 if (Character.isWhitespace(c)) {
                     return parseWhitespace();
@@ -163,11 +164,25 @@ public class ScannerLexer implements Lexer {
         }
     }
 
-    void expect(String s) throws LexicalError {
+    private Token parseMathMode() throws LexicalError {
+        Location start = expect("$");
+        if (input.peek() == '$') {
+            expect("$");
+            return new MathToken(true, start); // display math
+        } else {
+            return new MathToken(false, start);
+        }
+    }
+
+    Location expect(String s) throws LexicalError {
         try {
+            Location result = new ScannerLocn(input.location());
             input.consume(s);
+            return result;
         } catch (UnexpectedInput exc) {
             throw new LexicalError("Expected \"" + s + "\"", new ScannerLocn(location));
+        } catch (EOF e) {
+            throw new LexicalError("Unexpected end of input, expected \"" + s + "\"", new ScannerLocn(location));
         }
     }
 

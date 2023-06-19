@@ -5,6 +5,10 @@ import prelatex.PrelatexError;
 import prelatex.lexer.Lexer;
 import prelatex.lexer.Location;
 import prelatex.tokens.CharacterToken;
+import prelatex.tokens.StringToken;
+import prelatex.tokens.Token;
+
+import java.util.List;
 
 public class CharMacro extends Macro {
     public CharMacro() {
@@ -13,17 +17,10 @@ public class CharMacro extends Macro {
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        try {
-            mp.skipBlanks();
-            StringBuilder b = new StringBuilder();
-            while (mp.peekToken() instanceof CharacterToken c && Character.isDigit(c.codepoint())) {
-                mp.nextToken();
-                b.appendCodePoint(c.codepoint());
-            }
-            int codepoint = Integer.parseInt(b.toString());
-            mp.prependTokens(new CharacterToken(codepoint, location));
-        } catch (EOF e) {
-            throw new Lexer.LexicalError("Unexpected end of input in \\char", location);
-        }
+        mp.skipBlanks();
+        StringBuilder b = new StringBuilder();
+        List<Token> num = mp.parseNumber(location);
+        int codepoint = Integer.parseInt(mp.flattenToString(num));
+        mp.prependTokens(new StringToken("\\char" + codepoint, location));
     }
 }

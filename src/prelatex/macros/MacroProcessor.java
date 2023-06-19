@@ -54,6 +54,9 @@ public class MacroProcessor {
      */
     private final Deque<Token> pendingTokens = new LinkedList<>();
 
+    /** Are we in math mode? */
+    boolean mathMode = false;
+
     /**
      * Packages that have been read already.
      */
@@ -191,6 +194,10 @@ public class MacroProcessor {
                     break;
                 case MacroName n:
                     macroCall(n);
+                    break;
+                case MathToken mt:
+                    mathMode = !mathMode;
+                    output(mt);
                     break;
                 default:
                     output(t);
@@ -709,6 +716,25 @@ public class MacroProcessor {
         } catch (EOF e) {
             throw new LexicalError("Unexpected end of input while parsing macro parameters",
                     location);
+        }
+    }
+
+    public record thenElse(List<Token> thenClause, List<Token> elseClause) {}
+
+    public thenElse parseThenElse(Location location) throws PrelatexError {
+        try {
+        LinkedList<Token> thenClause = parseMatched(Set.of(fi, elseToken));
+        LinkedList<Token> elseClause;
+        Token t = thenClause.removeLast();
+        if (t.equals(elseToken)) {
+                elseClause = parseMatched(Set.of(fi));
+            elseClause.removeLast();
+            return new thenElse(thenClause, elseClause);
+        } else {
+            return new thenElse(thenClause, List.of());
+        }
+        } catch (EOF e) {
+            throw new PrelatexError("Unexpected EOF while parsing conditional", location);
         }
     }
 

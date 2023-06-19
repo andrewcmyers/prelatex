@@ -19,6 +19,7 @@ public class GlobalContext {
         mp.define("ifcase", new IfCase());
         mp.define("iffalse", new IfFalse());
         mp.define("iftrue", new IfTrue());
+        mp.define("ifmmode", new IfMMode());
         mp.define("csname", new CSName());
         mp.define("expandafter", new ExpandAfter());
         mp.define("catcode", new Catcode());
