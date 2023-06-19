@@ -6,14 +6,14 @@ import prelatex.tokens.Token;
 
 import java.util.List;
 
-public class AtBeginDocument extends LaTeXBuiltin {
-    public AtBeginDocument() {
-        super("AtBeginDocument", 1, List.of());
+public class AtEndDocument extends LaTeXBuiltin {
+    public AtEndDocument() {
+        super("AtEndDocument", 1, List.of());
     }
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) throws PrelatexError {
         assert arguments.size() == 1;
-        mp.atBeginDocument(arguments.get(0));
+        mp.atEndDocument(arguments.get(0));
     }
 }

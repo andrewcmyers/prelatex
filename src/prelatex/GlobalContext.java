@@ -39,6 +39,7 @@ public class GlobalContext {
         mp.define("DeclareOption", new DeclareOption());
         mp.define("ProcessOptions", new ProcessOptions());
         mp.define("AtBeginDocument", new AtBeginDocument());
+        mp.define("AtEndDocument", new AtEndDocument());
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
     }

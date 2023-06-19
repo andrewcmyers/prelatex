@@ -48,6 +48,7 @@ public class ScannerLexer implements Lexer {
         setCatcode('\r', SPACE);
         setCatcode('\f', SPACE);
         setCatcode('%', COMMENT);
+        setCatcode('@', LETTER); // Not strictly correct but simplifies package handling
 
         for (int i = 'A'; i <= 'Z'; i++) {
             setCatcode(i, LETTER);

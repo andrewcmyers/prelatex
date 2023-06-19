@@ -693,6 +693,14 @@ public class MacroProcessor {
         prologue.clear();
     }
 
+    private final LinkedList<Token> epilogue = new LinkedList<>();
+    public void atEndDocument(List<Token> tokens) { epilogue.addAll(tokens); }
+    public void outputEpilogue() {
+        prependTokens(epilogue);
+        epilogue.clear();
+    }
+
+
     public record LaTeXParams(int numArgs, List<List<Token>> defaultArgs) { }
 
     /** Standard parsing of LaTeX parameters ala \newcommand or \newenvironment. Returns

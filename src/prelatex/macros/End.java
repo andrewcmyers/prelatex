@@ -25,6 +25,9 @@ public class End extends LaTeXBuiltin {
         } catch (Namespace.LookupFailure e) {
             //  macro undefined, fall through
         }
+        if (s.equals("document")) {
+            mp.outputEpilogue();
+        }
         mp.output(new MacroName("end", location), new OpenBrace(location));
         mp.output(new StringToken(s, location));
         mp.output(new CloseBrace(location));
