@@ -12,10 +12,6 @@ public class IfCommand extends Conditional {
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        try {
-            mp.applyConditional(mp.testCondition(name));
-        } catch (EOF e) {
-            throw new MacroProcessor.SemanticError("Unexpected end of input in \\" + name, location);
-        }
+        mp.applyConditional(mp.testCondition(name), location);
     }
 }

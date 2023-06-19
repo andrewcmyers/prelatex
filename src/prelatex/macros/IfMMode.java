@@ -26,11 +26,6 @@ public class IfMMode extends Conditional {
         int num = -1;
         mp.skipBlanks();
         LinkedList<Token> selected = new LinkedList<>();
-        MacroProcessor.thenElse thenElse = mp.parseThenElse(location);
-        if (mp.mathMode) {
-            mp.prependTokens(thenElse.thenClause());
-        } else {
-            mp.prependTokens(thenElse.elseClause());
-        }
+        mp.applyConditional(mp.mathMode, location);
     }
 }

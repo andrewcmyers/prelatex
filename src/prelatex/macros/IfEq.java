@@ -64,7 +64,7 @@ public class IfEq extends Conditional {
                 default:
                     break;
             }
-            mp.applyConditional(comparison);
+            mp.applyConditional(comparison, location);
         } catch (EOF e) {
             throw new MacroProcessor.SemanticError("Unexpected end of input in \\if", location);
         }

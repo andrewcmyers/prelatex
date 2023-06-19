@@ -15,7 +15,6 @@ public class IfFalse extends Conditional {
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        MacroProcessor.thenElse thenElse = mp.parseThenElse(location);
-        mp.prependTokens(thenElse.elseClause());
+        mp.applyConditional(false, location);
     }
 }

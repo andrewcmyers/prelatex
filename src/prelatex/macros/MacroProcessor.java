@@ -515,17 +515,21 @@ public class MacroProcessor {
     static final Token fiToken = new MacroName("fi", new SyntheticLocn("\\fi terminator"));
 
     /** Read the rest of a conditional whose value is b */
-    public void applyConditional(boolean b) throws EOF, PrelatexError {
-        List<Token> kept = new ArrayList<>();
-        LinkedList<Token> thenClause = parseMatched(Set.of(elseToken, fiToken));
-        Token sep = thenClause.removeLast();
-        if (b) kept.addAll(thenClause);
-        if (sep.toString().equals("\\else")) {
-            LinkedList<Token> elseClause = parseMatched(Set.of(fiToken));
-            elseClause.removeLast();
-            if (!b) kept.addAll(elseClause);
+    public void applyConditional(boolean b, Location l) throws PrelatexError {
+        try {
+            List<Token> kept = new ArrayList<>();
+            LinkedList<Token> thenClause = parseMatched(Set.of(elseToken, fiToken));
+            Token sep = thenClause.removeLast();
+            if (b) kept.addAll(thenClause);
+            if (sep.toString().equals("\\else")) {
+                LinkedList<Token> elseClause = parseMatched(Set.of(fiToken));
+                elseClause.removeLast();
+                if (!b) kept.addAll(elseClause);
+            }
+            prependTokens(kept);
+        } catch (EOF e) {
+            throw new PrelatexError("Unexpected end of input in conditional", l);
         }
-        prependTokens(kept);
     }
 
     /** Tell the processor about special macros and packages. */
@@ -716,25 +720,6 @@ public class MacroProcessor {
         } catch (EOF e) {
             throw new LexicalError("Unexpected end of input while parsing macro parameters",
                     location);
-        }
-    }
-
-    public record thenElse(List<Token> thenClause, List<Token> elseClause) {}
-
-    public thenElse parseThenElse(Location location) throws PrelatexError {
-        try {
-        LinkedList<Token> thenClause = parseMatched(Set.of(fi, elseToken));
-        LinkedList<Token> elseClause;
-        Token t = thenClause.removeLast();
-        if (t.equals(elseToken)) {
-                elseClause = parseMatched(Set.of(fi));
-            elseClause.removeLast();
-            return new thenElse(thenClause, elseClause);
-        } else {
-            return new thenElse(thenClause, List.of());
-        }
-        } catch (EOF e) {
-            throw new PrelatexError("Unexpected EOF while parsing conditional", location);
         }
     }
 

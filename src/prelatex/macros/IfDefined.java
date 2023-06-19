@@ -27,18 +27,7 @@ public class IfDefined extends Conditional {
                 } catch (Namespace.LookupFailure e) {
                     defined = false;
                 }
-                LinkedList<Token> thenClause, elseClause = new LinkedList<>();
-                thenClause = mp.parseMatched(Set.of(MacroProcessor.fi,
-                                        MacroProcessor.elseToken));
-                MacroName sep = (MacroName)thenClause.removeLast();
-                if (sep.name().equals("else")) {
-                    elseClause = mp.parseMatched(Set.of(MacroProcessor.fi));
-                }
-                if (defined) {
-                    mp.prependTokens(thenClause);
-                } else {
-                    mp.prependTokens(elseClause);
-                }
+                mp.applyConditional(defined, t.location);
             } else {
                 throw new MacroProcessor.SemanticError("\\ifdefined argument must be macro name", location);
             }
