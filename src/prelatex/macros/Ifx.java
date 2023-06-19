@@ -33,7 +33,7 @@ public class Ifx extends Conditional {
                     comparison = t1.chars().equals(t2.chars());
                     break;
             }
-            mp.applyConditional(location, comparison);
+            mp.applyConditional(comparison);
         } catch (EOF exc) {
             throw new MacroProcessor.SemanticError("Unexpected end of input in \\ifx", location);
         }

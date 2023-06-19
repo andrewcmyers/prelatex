@@ -22,6 +22,7 @@ public class ProcessOptions extends LaTeXMacro {
             return; // no options passed
         }
         for (String option : options) {
+            if (option.isEmpty()) continue;
             try {
                 List<Token> body = ((LaTeXMacro) mp.lookup("option " + option)).body;
                 mp.prependTokens(body);

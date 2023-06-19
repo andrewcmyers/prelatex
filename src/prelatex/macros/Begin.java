@@ -50,6 +50,9 @@ public class Begin extends Macro {
             mp.output(open);
             mp.output(new StringToken(env, envLoc));
             mp.output(close);
+            if (env.equals("document")) { // TODO: this is a hack
+                mp.outputPrologue();
+            }
         } catch (EOF e) {
             throw new LexicalError("Unexpected end of input in \\begin", location);
         }

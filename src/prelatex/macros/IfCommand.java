@@ -3,7 +3,6 @@ package prelatex.macros;
 import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
-import prelatex.tokens.Token;
 
 /** A macro introduced by \newif */
 public class IfCommand extends Conditional {
@@ -14,7 +13,7 @@ public class IfCommand extends Conditional {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
-            mp.applyConditional(location, mp.testCondition(name));
+            mp.applyConditional(mp.testCondition(name));
         } catch (EOF e) {
             throw new MacroProcessor.SemanticError("Unexpected end of input in \\" + name, location);
         }

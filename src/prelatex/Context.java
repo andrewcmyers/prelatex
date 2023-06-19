@@ -11,8 +11,9 @@ import java.util.Map;
  *  added.
  */
 public class Context<T> implements Namespace<T> {
-	
-	interface Node<T> {
+
+
+    interface Node<T> {
 		T get(String name) throws LookupFailure;
 		void put(String name, T value);
 	}
@@ -85,11 +86,12 @@ public class Context<T> implements Namespace<T> {
 	
     // defn may be null
 	public void add(String name, T defn) {
-		if (defn == null) {
-			System.err.println("Warning: " + name + " bound to null");
-			return;
-		}
+		assert defn != null;
 		nodes.get(nodes.size() - 1).put(name,  defn);
+	}
+
+	public void setGlobal(String name, T m) {
+		nodes.get(0).put(name, m);
 	}
 
 	public int depth() {
