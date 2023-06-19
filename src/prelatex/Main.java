@@ -8,6 +8,7 @@ import lwon.data.DataObject;
 import lwon.data.Dictionary;
 import lwon.data.Text;
 import lwon.parse.Parser;
+import prelatex.lexer.Lexer;
 import prelatex.lexer.ScannerLexer;
 import prelatex.macros.*;
 
@@ -15,6 +16,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import easyIO.Scanner;
+import prelatex.macros.SimpleMacro;
+
 import java.util.*;
 
 
@@ -51,8 +54,8 @@ public class Main {
      */
     public enum Disposition { EXPAND, KEEP, DROP }
 
-    private Map<String, Disposition> packageDisposition = new HashMap<>();
-    private Map<String, Disposition> macroDisposition = new HashMap<>();
+    private final Map<String, Disposition> packageDisposition = new HashMap<>();
+    private final Map<String, Disposition> macroDisposition = new HashMap<>();
 
     public static void main(String[] args) {
         try {
@@ -171,45 +174,15 @@ public class Main {
         }
     }
 
-    private void initializeContext(MacroProcessor mp) {
-        // builtin TeX macros
-        mp.define("def", new Def());
-        mp.define("let", new LetMacro());
-        mp.define("input", new InputMacro());
-        mp.define("relax", new NoopMacro("relax", 0));
-        mp.define("char", new CharMacro());
-        mp.define("newif", new Newif());
-        mp.define("ifx", new Ifx());
-        mp.define("if", new IfEq());
-        mp.define("ifdefined", new IfDefined());
-        mp.define("ifcase", new IfCase());
-        mp.define("csname", new CSName());
-        mp.define("expandafter", new ExpandAfter());
-        // builtin LaTeX macros
-        mp.define("newcommand", new NewCommand());
-        mp.define("DeclareRobustCommand", new RenewCommand());
-        mp.define("providecommand", new ProvideCommand());
-        mp.define("renewcommand", new RenewCommand());
-        mp.define("newenvironment", new NewEnvironment());
-        mp.define("begin", new Begin());
-        mp.define("end", new End());
-        mp.define("RequirePackage", new RequirePackage("RequirePackage"));
-        mp.define("usepackage", new RequirePackage("usepackage"));
-        mp.define("ProvidesPackage", new NoopMacro("ProvidesPackage", 1));
-        mp.define("IfFileExists", new IfFileExists());
-        mp.define("DeclareOption", new DeclareOption());
-        mp.define("ProcessOptions", new ProcessOptions());
-        // standardish macros from LaTeX packages like etoolbox
-        mp.define("ifbool", new IfBool());
-    }
 
     void run() {
         try {
-            in = new ScannerLexer(inputFiles);
+            Context<Lexer.CatCode> catcodes = new Context<>();
+            in = new ScannerLexer(inputFiles, catcodes);
             ProcessorOutput out = new CondensedOutput(outWriter, noComments);
             PrintWriter err = new PrintWriter(System.err, true);
-            processor = new MacroProcessor(in, out, err, searchPath);
-            initializeContext(processor);
+            processor = new MacroProcessor(in, out, err, searchPath, catcodes);
+            GlobalContext.initialize(processor);
             processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {

@@ -4,6 +4,8 @@ import easyIO.BacktrackScanner;
 import easyIO.EOF;
 import easyIO.Scanner;
 import easyIO.UnexpectedInput;
+import prelatex.Context;
+import prelatex.Namespace;
 import prelatex.tokens.*;
 
 import java.io.FileInputStream;
@@ -12,69 +14,52 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import static prelatex.lexer.ScannerLexer.CatCode.*;
+import static prelatex.lexer.Lexer.CatCode.*;
 
 public class ScannerLexer implements Lexer {
     static final boolean DEBUG_LEXING = false;
     Scanner input;
     BacktrackScanner.Location location;
 
+    Context<CatCode> context;
+
     enum LexerMode { N, M, S } // XXX this should be implemented more fully and correctly
     LexerMode mode;
 
-    enum CatCode {
-        ESCAPE, // 0 (\)
-        BEGIN, // 1 ({)
-        END, // 2 (})
-        MATH, // 3 ($)
-        ALIGN, // 4 (&)
-        NEWLINE, // 5 (\n)
-        PARAMETER, // 6 (#)
-        SUPERSCRIPT, // 7 (^)
-        SUBSCRIPT, // 8 (_)
-        IGNORED, // 9 (\0)
-        SPACE, // 10 ( )
-        LETTER, // 11 (a-z, A-Z)
-        OTHER, // 12
-        ACTIVE, // 13 (~)
-        COMMENT, // 14 (%)
-        INVALID // 15
-    }
 
-    CatCode[] catcodes = {
-        ESCAPE, BEGIN, END, MATH, ALIGN, NEWLINE, PARAMETER,
-        SUPERSCRIPT, SUBSCRIPT, IGNORED, SPACE, LETTER, OTHER, ACTIVE,
-        COMMENT, INVALID
-    };
-    static CatCode[] charCatcodes = new CatCode[256];
-    static {
-        for (int i = 0; i <= 255; i++) {
-            charCatcodes[i] = OTHER;
-        }
-        charCatcodes['\\'] = ESCAPE;
-        charCatcodes['{'] = BEGIN;
-        charCatcodes['}'] = END;
-        charCatcodes['$'] = MATH;
-        charCatcodes['&'] = ALIGN;
-        charCatcodes['\n'] = NEWLINE;
-        charCatcodes['#'] = PARAMETER;
-        charCatcodes[]
+    private void setupCatcodes() {
+        setCatcode('\\', ESCAPE);
+        setCatcode('{', BEGIN);
+        setCatcode('}', END);
+        setCatcode('$', MATH);
+        setCatcode('&', ALIGN);
+        setCatcode('\n', NEWLINE);
+        setCatcode('#', PARAMETER);
+        setCatcode('~', ACTIVE);
+        setCatcode('^', SUPERSCRIPT);
+        setCatcode('_', SUBSCRIPT);
+        setCatcode(0, IGNORED);
+        setCatcode(255, INVALID);
+        setCatcode(' ', SPACE);
+        setCatcode('\t', SPACE);
+        setCatcode('\r', SPACE);
+        setCatcode('\f', SPACE);
+        setCatcode('%', COMMENT);
+
         for (int i = 'A'; i <= 'Z'; i++) {
-            charCatcodes[i] = LETTER;
+            setCatcode(i, LETTER);
         }
         for (int i = 'a'; i <= 'z'; i++) {
-            charCatcodes[i] = LETTER;
+            setCatcode(i, LETTER);
         }
     }
 
-
-    public ScannerLexer(List<String> filenames) throws FileNotFoundException {
+    public ScannerLexer(List<String> filenames, Context<CatCode> catcodes) throws FileNotFoundException {
         LinkedList<String> reversed = new LinkedList<>();
+        this.context  = catcodes;
         for (String f: filenames) {
             reversed.addFirst(f);
         }
@@ -90,6 +75,11 @@ public class ScannerLexer implements Lexer {
             input.includeSource(new InputStreamReader(new FileInputStream(f), utf8), f);
         }
         mode = LexerMode.N;
+        setupCatcodes();
+    }
+
+    public void setContext(Context<CatCode> context) {
+        this.context = context;
     }
 
     public void includeSource(String filename) {
@@ -101,6 +91,46 @@ public class ScannerLexer implements Lexer {
             System.err.println(exc.getMessage() + filename);
         }
     }
+
+    @Override
+    public int skipChars(String s) {
+        try {
+            if (-1 != s.indexOf(input.peek())) {
+                return input.next();
+            }
+        } catch (EOF e) {
+            return -1;
+        }
+        return 0;
+    }
+
+    @Override
+    public int nextChar() {
+        try {
+            if (input.peek() >= 0 && getCatcode(input.peek()) == SUPERSCRIPT) {
+                throw new Error("^^ escapes not supported yet");
+                // TODO: support ^^ escapes here
+            }
+            return input.nextCodePoint();
+        } catch (EOF e) {
+            return -1;
+        }
+    }
+
+    @Override
+    public void setCatcode(int c, CatCode code) {
+        context.add(Character.toString(c), code);
+    }
+
+    @Override
+    public CatCode getCatcode(int c) {
+        try {
+            return context.lookup(Character.toString(c));
+        } catch (Namespace.LookupFailure e) {
+            return OTHER;
+        }
+    }
+
 
     /** Read enough input to find the next token.
      */
@@ -114,13 +144,17 @@ public class ScannerLexer implements Lexer {
     }
     private Token parseToken() throws LexicalError, EOF {
         int c = input.peek();
-        switch (c) {
-            case -1: throw new EOF();
-            case '\\': return parseMacroName();
-            case '%': return parseComment();
-            case '{': return parseBegin();
-            case '}': return parseEnd();
-            case '#': return parseParameter();
+        if ( c == -1) throw new EOF();
+        switch (getCatcode(c)) {
+            case ESCAPE: return parseMacroName();
+            case COMMENT: return parseComment();
+            case BEGIN: return parseBegin();
+            case END: return parseEnd();
+            case PARAMETER: return parseParameter();
+            case IGNORED: return parseToken();
+            // should handle ^^ character escapes
+            case INVALID: throw new LexicalError("Invalid character " + c, new ScannerLocn(location));
+            case ACTIVE: return new ActiveCharMacro(nextChar(), new ScannerLocn(location));
             default:
                 if (Character.isWhitespace(c)) {
                     return parseWhitespace();
@@ -212,8 +246,8 @@ public class ScannerLexer implements Lexer {
         expect("\\");
         StringBuilder b = new StringBuilder();
         int ch = input.peek();
-        if (legalMacroChar(ch)) {
-            while (input.hasNext() && legalMacroChar(input.peek())) {
+        if (legalLongMacroChar(ch)) {
+            while (input.hasNext() && legalLongMacroChar(input.peek())) {
                 b.append(input.next());
             }
             // skip following whitespace
@@ -224,7 +258,7 @@ public class ScannerLexer implements Lexer {
         return new MacroName(b.toString(), new ScannerLocn(location));
     }
 
-    private boolean legalMacroChar(int c) {
+    private boolean legalLongMacroChar(int c) {
         return Character.isAlphabetic(c) || c == '@';
     }
 

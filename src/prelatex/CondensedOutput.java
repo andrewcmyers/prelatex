@@ -6,18 +6,24 @@ import prelatex.tokens.Separator;
 import prelatex.tokens.Token;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 public class CondensedOutput implements ProcessorOutput {
     private PrintWriter out;
     private boolean removeComments;
     private boolean lastWasAlphaMacro = false;
 
+    private ArrayList<Token> outputLog; // null if debugging turned off
+    private static boolean DEBUG_OUTPUT = true;
+
     CondensedOutput(PrintWriter out, boolean removeComments) {
         this.out = out;
         this.removeComments = removeComments;
+        if (DEBUG_OUTPUT) outputLog = new ArrayList<>();
     }
     @Override
     public void output(Token t) throws PrelatexError {
+        if (DEBUG_OUTPUT) outputLog.add(t);
         String s = t.chars();
         if (Character.isAlphabetic(s.charAt(0)) && lastWasAlphaMacro) {
             out.print(' ');

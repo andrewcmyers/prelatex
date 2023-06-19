@@ -5,6 +5,7 @@ import prelatex.lexer.Location;
 import prelatex.tokens.CharacterToken;
 import prelatex.tokens.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DeclareOption extends StarredBuiltin {
@@ -15,12 +16,12 @@ public class DeclareOption extends StarredBuiltin {
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) {
-        List<Token> options;
+        List<Token> options = new ArrayList<>();
         List<Token> optionName = arguments.get(0);
         List<Token> action = arguments.get(1);
         try {
-            DefMacro m = (DefMacro) mp.lookup("declared options");
-            options = m.body;
+            LaTeXMacro m = (LaTeXMacro) mp.lookup("declared options");
+            options.addAll(m.body);
             options.add(new CharacterToken(',', location));
             options.addAll(optionName);
         } catch (Namespace.LookupFailure e) {

@@ -31,7 +31,7 @@ public class Def extends BuiltinMacro {
                         t.location);
             }
             Token mname = nameTokens.get(0);
-            String name_s = mname.toString().substring(1);
+            String name_s = ((MacroName)mname).name();
             // code above also appears in NewCommand, sorry
             List<Token> params = new ArrayList<>();
             int n = 0;
@@ -51,9 +51,14 @@ public class Def extends BuiltinMacro {
             }
             List<Token> body = mp.parseMacroArg(Maybe.none());
             if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
-            mp.define(name_s, new DefMacro(name_s, n, params, body));
+            makeDefinition(mp, name_s, new DefMacro(name_s, n, params, body));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
         }
+    }
+
+    /** Store this definition in the right place. */
+    protected void makeDefinition(MacroProcessor mp, String name, DefMacro m) {
+        mp.define(name, m);
     }
 }
