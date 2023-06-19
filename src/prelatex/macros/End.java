@@ -18,6 +18,7 @@ public class End extends LaTeXBuiltin {
         MacroName endName = new MacroName("end" + s, location);
         try {
             if (mp.lookup(endName) instanceof LaTeXMacro) {
+                mp.prependTokens(new MacroName("endgroup", endName.location));
                 mp.prependTokens(endName);
                 return;
             }

@@ -23,6 +23,8 @@ public class GlobalContext {
         mp.define("csname", new CSName());
         mp.define("expandafter", new ExpandAfter());
         mp.define("catcode", new Catcode());
+        mp.define("begingroup", new BeginGroup());
+        mp.define("endgroup", new EndGroup());
         // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
         mp.define("DeclareRobustCommand", new RenewCommand());

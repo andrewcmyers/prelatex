@@ -29,10 +29,10 @@ public class Catcode extends Macro {
                     codepoint = m.codepoint();
                     break;
                 case MacroName m:
-                    if (m.name().length() > 0) {
+                    if (m.name().length() > 1) {
                         throw new PrelatexError("improper alphabetic sequence in \\catcode", ch.location);
                     }
-                    codepoint = Character.codePointAt(m.chars(), 0);
+                    codepoint = Character.codePointAt(m.name(), 0);
                     break;
                 case CharacterToken ct:
                     codepoint = ct.codepoint();

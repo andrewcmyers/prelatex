@@ -33,6 +33,7 @@ public class Begin extends Macro {
                 if (m1 instanceof LaTeXMacro m) {
                     List<List<Token>> arguments = mp.parseLaTeXArguments(m.numArgs, m.defaultArgs, envLoc);
                     m.applyArguments(arguments, mp, envLoc);
+                    mp.prependTokens(new MacroName("begingroup", envLoc));
                     return;
                 } else {
                     mp.reportError("Macro \\" + env + " not defined by \\newenvironment", location);

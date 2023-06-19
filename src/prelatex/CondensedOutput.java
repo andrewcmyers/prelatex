@@ -28,6 +28,9 @@ public class CondensedOutput implements ProcessorOutput {
         if (Character.isAlphabetic(s.charAt(0)) && lastWasAlphaMacro) {
             out.print(' ');
         }
+        if (Character.isWhitespace(s.charAt(0)) && lastWasAlphaMacro) {
+            out.print("{}"); // prevent previous macro from eating real whitespace
+        }
         if (t instanceof MacroName) {
             s = t.toString();
             out.print(s);

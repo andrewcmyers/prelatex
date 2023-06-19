@@ -163,14 +163,24 @@ public class MacroProcessor {
         }
     }
 
-    private void pushContexts() {
+    public void pushContexts(Macro opener) {
         macros.push();
         catcodes.push();
+        macros.add("context opener", opener);
     }
-    private void popContexts() {
+    public void popContexts(Macro opener, Location loc) throws PrelatexError {
+        try {
+            if (macros.lookup("context opener") != opener) {
+                throw new PrelatexError("Missing \\endgroup or extra }", loc);
+            }
+        } catch (Namespace.LookupFailure e) {
+            throw new PrelatexError("Missing " + opener.name + "?", loc);
+        }
         macros.pop();
         catcodes.pop();
     }
+
+    Macro openBrace = new NoopMacro("{", 0);
 
     /** The main loop for processing tokens, until either
      *  the end of input is reached or an error is. */
@@ -180,7 +190,7 @@ public class MacroProcessor {
             Token t = nextToken();
             switch (t) {
                 case OpenBrace b:
-                    pushContexts();
+                    pushContexts(openBrace);
                     braceDepth++;
                     output(b);
                     break;
@@ -188,7 +198,7 @@ public class MacroProcessor {
                     if (braceDepth == 0) {
                         throw new LexicalError("Closing brace with no matching opening brace", b.location);
                     }
-                    popContexts();
+                    popContexts(openBrace, b.location);
                     braceDepth--;
                     output(b);
                     break;
