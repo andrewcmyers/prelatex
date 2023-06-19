@@ -4,7 +4,7 @@ This tool converts LaTeX source(s) into a single equivalent LaTeX output file, w
 
 * \newcommand and \newenvironment definitions
 * \*def definitions
-* various conditionals (\newif, \ifx, \ifcase, etc.)
+* various conditionals (\newif, \ifx, \ifcase, \ifmmode, etc.)
 * file read using \input
 * some more advanced constructs: \csname, \expandafter, ...
 
@@ -20,8 +20,7 @@ The emulation of TeX and LaTeX is far from perfect (and can never be perfect).
 I am hoping that people will contribute to improving its capabilities to make
 this a better tool. Some known issues are:
 
-* Some variant forms of \def are not supported yet, like \edef and \gdef
-* No support for \catcode manipulation
+* Some variant forms of \def are not supported yet, like \edef
 
 ## Configuration
 
