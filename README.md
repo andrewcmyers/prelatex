@@ -18,9 +18,13 @@ for additional source files.
 
 The emulation of TeX and LaTeX is far from perfect (and can never be perfect).
 I am hoping that people will contribute to improving its capabilities to make
-this a better tool. Some known issues are:
+this a better tool. Some known (and fixable) issues are:
 
 * Some variant forms of \def are not supported yet, like \edef
+* Various other builtin TeX macros are not supported, like \noexpand, \string, \uppercase, \lowercase, \number,
+  \typeout, \message, etc.
+
+preLaTeX is not integrated with BibTeX, which should not be a problem for most uses.
 
 ## Configuration
 
