@@ -23,6 +23,7 @@ public class Typeout extends LaTeXBuiltin {
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             List<Token> text = mp.parseMatched(Set.of(), true);
+            text = mp.stripOuterBraces(text);
             if (!Main.Disposition.DROP.equals(mp.macroDisposition.get("typeout"))) {
                 mp.reportError(mp.flattenToString(text), location);
             }
