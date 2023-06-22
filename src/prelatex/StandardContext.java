@@ -3,7 +3,7 @@ package prelatex;
 import prelatex.macros.*;
 import prelatex.macros.SimpleMacro;
 
-public class GlobalContext {
+public class StandardContext {
     public static void initialize(MacroProcessor mp) {
         // builtin TeX macros
         mp.define("def", new Def());
@@ -25,6 +25,7 @@ public class GlobalContext {
         mp.define("catcode", new Catcode());
         mp.define("begingroup", new BeginGroup());
         mp.define("endgroup", new EndGroup());
+        mp.define("relax", new NoopMacro("relax", 0));
         // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
         mp.define("DeclareRobustCommand", new RenewCommand());
@@ -43,7 +44,7 @@ public class GlobalContext {
         mp.define("AtBeginDocument", new AtBeginDocument());
         mp.define("AtEndDocument", new AtEndDocument());
         mp.define("protect", new NoopMacro("protect", 0));
-        mp.define("relax", new NoopMacro("relax", 0));
+        mp.define("typeout", new Typeout());
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
     }

@@ -7,7 +7,11 @@ abstract public class Conditional extends Macro {
         super(name);
     }
 
+    @Override
     public boolean isConditional() {
         return true;
     }
+
+    @Override
+    public boolean isExpandable() { return true; }
 }

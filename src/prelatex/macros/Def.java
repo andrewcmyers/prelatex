@@ -33,9 +33,9 @@ public class Def extends BuiltinMacro {
                     try {
                         int i = Integer.parseInt(num.chars());
                         if (i == n + 1) n++;
-                        else throw new PrelatexError("Macro parameters must increase sequentially", num.location);
+                        else throw new SemanticError("Macro parameters must increase sequentially", num.location);
                     } catch (NumberFormatException exc) {
-                        throw new PrelatexError("Macro parameters must be numbers", num.location);
+                        throw new SemanticError("Macro parameters must be numbers", num.location);
                     }
                 }
             }

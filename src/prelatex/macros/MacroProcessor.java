@@ -171,10 +171,10 @@ public class MacroProcessor {
     public void popContexts(Macro opener, Location loc) throws PrelatexError {
         try {
             if (macros.lookup("context opener") != opener) {
-                throw new PrelatexError("Missing \\endgroup or extra }", loc);
+                throw new SemanticError("Missing \\endgroup or extra }", loc);
             }
         } catch (Namespace.LookupFailure e) {
-            throw new PrelatexError("Missing " + opener.name + "?", loc);
+            throw new SemanticError("Missing " + opener.name + "?", loc);
         }
         macros.pop();
         catcodes.pop();
@@ -265,6 +265,9 @@ public class MacroProcessor {
      * conditional is followed similarly by a corresponding \fi
      */
     LinkedList<Token> parseMatched(Set<Token> delimiters) throws PrelatexError, EOF {
+        return parseMatched(delimiters, false);
+    }
+    LinkedList<Token> parseMatched(Set<Token> delimiters, boolean expand) throws PrelatexError, EOF {
         LinkedList<Token> result = new LinkedList<>();
         for (;;) {
             if (!delimiters.isEmpty()) {
@@ -281,7 +284,7 @@ public class MacroProcessor {
                     throw new SemanticError("Unexpected close brace", b.location);
                 case OpenBrace b:
                     result.add(t);
-                    List<Token> more = parseMatched(Set.of(new CloseBrace(b.location)));
+                    List<Token> more = parseMatched(Set.of(new CloseBrace(b.location)), expand);
                     result.addAll(more);
                     break;
                 case MacroName m:
@@ -289,12 +292,16 @@ public class MacroProcessor {
                         throw new SemanticError("Unexpected \\fi", m.location);
                     try {
                         Macro binding = lookup(m.name());
-                        if (binding.isConditional()) {
-                            result.add(m);
-                            List<Token> cond = parseMatched(Set.of(fi));
-                            result.addAll(cond);
+                        if (expand && binding.isExpandable()) {
+                            macroCall(m);
                         } else {
-                            result.add(m);
+                            if (binding.isConditional()) {
+                                result.add(m);
+                                List<Token> cond = parseMatched(Set.of(fi), expand);
+                                result.addAll(cond);
+                            } else {
+                                result.add(m);
+                            }
                         }
                     } catch (Namespace.LookupFailure e) {
                         result.add(m);
@@ -316,20 +323,30 @@ public class MacroProcessor {
         ArrayList<Token> stripped = new ArrayList<>();
         int i = 0, n = tokens.size();
         for (Token t : tokens) {
-            if (t instanceof OpenBrace) depth++;
-            if (t instanceof CloseBrace) depth--;
-            if (i == 0) { i++; continue; }
-            if (i == n - 1 && t instanceof CloseBrace) {
-                assert depth == 0;
-                return stripped;
+            if (t instanceof OpenBrace) { depth++; i++; continue; }
+            if (t instanceof CloseBrace) {
+                depth--;
+                i++;
+                if (i == n) {
+                    assert depth == 0;
+                    return stripped;
+                }
+                continue;
             }
+            if (i == 0) { i++; continue; }
+            stripped.add(t);
             if (depth == 0) return tokens; // outer braces don't match
             i++;
         }
         return tokens;
     }
 
-    /** Parse a macro argument. The sequence may be either
+    /** Parse a macro argument without expanding it, like {@code parseMacroArg}.
+     */
+    List<Token> parseMacroArg(Maybe<Token> delimiter) throws PrelatexError, EOF {
+        return parseMacroArg(delimiter, false);
+    }
+    /** Parse and possibly expand a macro argument. The sequence may be either
      * delimited by the specified delimiter, in which case the shortest
      * properly matched sequence of tokens up to the delimiter is returned,
      * or not delimited, in which case the first token or first
@@ -338,7 +355,7 @@ public class MacroProcessor {
      * properly matched tokens by a corresponding closing brace, and each
      * conditional is followed similarly by a corresponding \fi
      */
-    List<Token> parseMacroArg(Maybe<Token> delimiter) throws PrelatexError, EOF {
+    List<Token> parseMacroArg(Maybe<Token> delimiter, boolean expand) throws PrelatexError, EOF {
         if (!delimiter.isPresent()) skipBlanks();
         LinkedList<Token> result = new LinkedList<>();
         int braceDepth = 0;
@@ -381,8 +398,11 @@ public class MacroProcessor {
                                 Macro binding = lookup(m.name());
                                 if (binding.isConditional()) {
                                     result.add(m);
-                                    List<Token> cond = parseMatched(Set.of(fi));
+                                    List<Token> cond = parseMatched(Set.of(fi), expand);
                                     result.addAll(cond);
+                                }
+                                if (expand && binding.isExpandable()) {
+                                    macroCall(m);
                                 }
                             } catch (Namespace.LookupFailure e) {
                                 result.add(m);
@@ -538,7 +558,7 @@ public class MacroProcessor {
             }
             prependTokens(kept);
         } catch (EOF e) {
-            throw new PrelatexError("Unexpected end of input in conditional", l);
+            throw new SemanticError("Unexpected end of input in conditional", l);
         }
     }
 
@@ -565,9 +585,9 @@ public class MacroProcessor {
             if (nameTokens.size() == 1 && nameTokens.get(0) instanceof MacroName mname) {
                 return mname.name();
             }
-            throw new PrelatexError("Invalid macro name : " + flattenToString(nameTokens), t.location);
+            throw new SemanticError("Invalid macro name : " + flattenToString(nameTokens), t.location);
         } catch (EOF e) {
-            throw new PrelatexError("Unexpected end of input, expecting macro name", location);
+            throw new SemanticError("Unexpected end of input, expecting macro name", location);
         }
 
     }
@@ -677,10 +697,10 @@ public class MacroProcessor {
                         if (m.isExpandable()) {
                             macroCall(n);
                         } else {
-                            throw new PrelatexError("Can't expand argument " + n, d.location);
+                            throw new SemanticError("Can't expand argument " + n, d.location);
                         }
                     } catch (Namespace.LookupFailure e) {
-                        throw new PrelatexError("Can't expand unknown macro " + n + " in catcode argument", d.location);
+                        throw new SemanticError("Can't expand unknown macro " + n + " in catcode argument", d.location);
                     }
                 } else {
                     break;
@@ -688,7 +708,7 @@ public class MacroProcessor {
             }
             return result;
         } catch (EOF e) {
-            throw new PrelatexError("Unexpected EOF when number expected", location);
+            throw new SemanticError("Unexpected EOF when number expected", location);
         }
     }
 
@@ -709,7 +729,6 @@ public class MacroProcessor {
         prependTokens(epilogue);
         epilogue.clear();
     }
-
 
     public record LaTeXParams(int numArgs, List<List<Token>> defaultArgs) { }
 

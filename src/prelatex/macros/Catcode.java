@@ -2,6 +2,7 @@ package prelatex.macros;
 
 import easyIO.EOF;
 import prelatex.PrelatexError;
+import prelatex.macros.MacroProcessor.SemanticError;
 import prelatex.lexer.Location;
 import prelatex.tokens.ActiveCharMacro;
 import prelatex.tokens.CharacterToken;
@@ -20,7 +21,7 @@ public class Catcode extends Macro {
         try {
             Token t = mp.nextNonblankToken();
             if (!t.equals(new CharacterToken('`', location))) {
-                throw new PrelatexError("Expected ` after \\catcode", t.location);
+                throw new SemanticError("Expected ` after \\catcode", t.location);
             }
             Token ch = mp.nextToken();
             int codepoint;
@@ -30,7 +31,7 @@ public class Catcode extends Macro {
                     break;
                 case MacroName m:
                     if (m.name().length() > 1) {
-                        throw new PrelatexError("improper alphabetic sequence in \\catcode", ch.location);
+                        throw new SemanticError("improper alphabetic sequence in \\catcode", ch.location);
                     }
                     codepoint = Character.codePointAt(m.name(), 0);
                     break;
@@ -42,17 +43,17 @@ public class Catcode extends Macro {
             }
             Token eq = mp.nextNonblankToken();
             if (!eq.equals(new CharacterToken('=', eq.location))) {
-                throw new PrelatexError("Expected = after character in \\catcode", eq.location);
+                throw new SemanticError("Expected = after character in \\catcode", eq.location);
             }
             List<Token> number = mp.parseNumber(eq.location);
             try {
                 int code = Integer.parseInt(mp.flattenToString(number));
                 mp.setCatcode(codepoint, code);
             } catch (NumberFormatException e) {
-                throw new PrelatexError("Illegal code number in \\catcode", eq.location);
+                throw new SemanticError("Illegal code number in \\catcode", eq.location);
             }
         } catch (EOF exc) {
-            throw new PrelatexError("Unexpected EOF in \\catcode", location);
+            throw new SemanticError("Unexpected EOF in \\catcode", location);
         }
     }
 }

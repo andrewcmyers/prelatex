@@ -1,27 +1,35 @@
 package prelatex.macros;
 
+import easyIO.EOF;
+import prelatex.PrelatexError;
 import prelatex.lexer.Location;
 import prelatex.lexer.SyntheticLocn;
-import prelatex.tokens.CharacterToken;
-import prelatex.tokens.MacroParam;
+import prelatex.macros.MacroProcessor.SemanticError;
 import prelatex.tokens.Separator;
 import prelatex.tokens.Token;
 
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /** The \input macro */
-public class InputMacro extends BuiltinMacro {
+public class InputMacro extends Macro {
     public InputMacro() {
-        super("input", 1);
+        super("input");
         Location loc = new SyntheticLocn("\\RequirePackage parameter 1");
-        setPattern(Arrays.asList(new MacroParam(new CharacterToken('1', loc), loc),
-                new Separator(" ", loc)));
     }
 
     @Override
-    public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) {
-        assert arguments.size() == 1;
-        mp.includeFile(arguments.get(0), List.of("", ".tex"), location);
+    public void apply(MacroProcessor mp, Location location) throws PrelatexError {
+        try {
+            LinkedList<Token> parsedArg = mp.parseMatched(Set.of(new Separator(" ",
+                            new SyntheticLocn("\\input definition"))),
+                    true);
+            parsedArg.removeLast();
+            List<Token> arg =  mp.stripOuterBraces(parsedArg);
+            mp.includeFile(arg, List.of("", ".tex"), location);
+        } catch (EOF e) {
+            throw new SemanticError("Unexpected end of input in \\input", location);
+        }
     }
 }

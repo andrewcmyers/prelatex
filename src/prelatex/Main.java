@@ -16,7 +16,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import easyIO.Scanner;
-import prelatex.macros.SimpleMacro;
 
 import java.util.*;
 
@@ -182,7 +181,7 @@ public class Main {
             ProcessorOutput out = new CondensedOutput(outWriter, noComments);
             PrintWriter err = new PrintWriter(System.err, true);
             processor = new MacroProcessor(in, out, err, searchPath, catcodes);
-            GlobalContext.initialize(processor);
+            StandardContext.initialize(processor);
             processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {
