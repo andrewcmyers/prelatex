@@ -22,7 +22,7 @@ this a better tool. Some known (and fixable) issues are:
 
 * Some variant forms of \def are not supported yet, like \edef
 * Various other builtin TeX macros are not supported, like \noexpand, \string, \uppercase, \lowercase, \number,
-  \typeout, \message, etc.
+  \typeout, \message, \afterassignment, \aftergroup, \ignorespaces, etc.
 
 preLaTeX is not integrated with BibTeX, which should not be a problem for most uses.
 
