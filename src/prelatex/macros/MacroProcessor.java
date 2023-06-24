@@ -274,8 +274,19 @@ public class MacroProcessor {
             case EXPAND: break;
         }
         Macro binding;
+        String definedName = m.name();
         try {
-            binding = lookup(m.name());
+            Set<Token> suffixes = macroSuffixes.lookup(definedName);
+            if (suffixes.contains(peekToken())) {
+                definedName += nextToken().chars();
+            }
+        } catch (Namespace.LookupFailure e) {
+            // no suffixes
+        } catch (EOF e) {
+            throw new SemanticError("Unexpected end of input while looking for macro suffix for " + m, m.location);
+        }
+        try {
+            binding = lookup(definedName);
         } catch (Namespace.LookupFailure exc) {
             output(m);
             return;
