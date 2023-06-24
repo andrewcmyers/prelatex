@@ -9,6 +9,8 @@ import prelatex.lexer.Location;
 import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
 
+import static cms.util.maybe.Maybe.none;
+import static cms.util.maybe.Maybe.some;
 import static prelatex.Main.Disposition.DROP;
 import static prelatex.macros.MacroProcessor.LaTeXParams;
 
@@ -33,11 +35,26 @@ public class NewCommand extends Macro {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
-            boolean longdef = true; // TODO: actually enforce this
+            boolean longdef = true;
+            mp.skipBlanks();
+            if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '*') {
+                longdef = false;
+                mp.nextToken();
+                mp.skipBlanks();
+            }
             String name_s = mp.parseMacroName(location);
+            boolean expectSuffix = mp.hasPrefix("WithSuffix");
             boolean dropDefn = false;
+            mp.clearPrefixes();
+            mp.skipBlanks();
+            String definedName = name_s;
+            if (expectSuffix) {
+                Token t = mp.nextToken();
+                definedName = name_s + t.chars();
+                mp.recordSuffix(name_s, t);
+            }
             try {
-                mp.lookup(name_s);
+                mp.lookup(definedName);
                 switch (name) {
                     case "newcommand":
                         throw new SemanticError("Macro \\" + name_s + " already defined", location);
@@ -54,21 +71,16 @@ public class NewCommand extends Macro {
                 // Just because we can't find it doesn't mean it isn't defined already.
             }
             mp.skipBlanks();
-            if (mp.peekToken() instanceof CharacterToken c && c.codepoint() == '*') {
-                longdef = false;
-                mp.nextToken();
-                mp.skipBlanks();
-            }
             LaTeXParams parameters = mp.parseLaTeXParameters(location);
-
             mp.skipBlanks();
             if (!(mp.peekToken() instanceof OpenBrace)) {
                 throw new SemanticError("Macro body must be surrounded by braces", mp.peekToken().location);
             }
-            List<Token> body = mp.parseMacroArg(Maybe.none());
+            List<Token> body = mp.parseMacroArg(none());
+            if (!longdef) mp.forbidPar(body);
             if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
             if (!dropDefn) {
-                Macro m = new LaTeXMacro(name_s, parameters.numArgs(), parameters.defaultArgs(), body);
+                Macro m = new LaTeXMacro(definedName, parameters.numArgs(), parameters.defaultArgs(), body);
                 mp.define(name_s, m);
             }
         } catch (EOF exc) {

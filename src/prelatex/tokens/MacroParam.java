@@ -29,6 +29,4 @@ public class MacroParam extends Token {
     public boolean canEqual(Object o) {
         return (o instanceof MacroParam);
     }
-
-
 }

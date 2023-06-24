@@ -37,6 +37,9 @@ public class MacroProcessor {
      */
     private final Context<Lexer.CatCode> catcodes;
 
+    /** Suffixes supported by macros. */
+    private final Context<Set<Token>> macroSuffixes = new Context<>();
+
     /** Where token input comes from. */
     private final Lexer lexer;
 
@@ -66,6 +69,38 @@ public class MacroProcessor {
     Map<String, Disposition> packageDisposition;
     Map<String, Disposition> macroDisposition;
 
+    private Set<String> prefixes = new HashSet<>();
+
+    boolean hasPrefixes() {
+        return !prefixes.isEmpty();
+    }
+    boolean hasPrefix(String s) {
+        return prefixes.contains(s);
+    }
+    void clearPrefixes() {
+        prefixes = new HashSet<>();
+    }
+    public void setPrefix(String name) {
+        prefixes.add(name);
+    }
+
+    /** Record that the named macro has a suffixed definition.
+     */
+    public void recordSuffix(String macroName, Token suffix) {
+        try {
+            macroSuffixes.lookup(macroName).add(suffix);
+        } catch (Namespace.LookupFailure e) {
+            Set<Token> init = new HashSet<>(Set.of(suffix));
+            macroSuffixes.add(macroName, init);
+        }
+    }
+
+    /** An input error that is considered semantic rather than lexical in nature. */
+    public static class SemanticError extends PrelatexError {
+        public SemanticError(String m, Location l) {
+            super(m, l);
+        }
+    }
     /** Create a macro processor instance.
      *
      * @param lexer The source of input tokens
@@ -166,6 +201,7 @@ public class MacroProcessor {
     public void pushContexts(Macro opener) {
         macros.push();
         catcodes.push();
+        macroSuffixes.push();
         macros.add("context opener", opener);
     }
     public void popContexts(Macro opener, Location loc) throws PrelatexError {
@@ -178,6 +214,7 @@ public class MacroProcessor {
         }
         macros.pop();
         catcodes.pop();
+        macroSuffixes.pop();
     }
 
     Macro openBrace = new NoopMacro("{", 0);
@@ -201,6 +238,7 @@ public class MacroProcessor {
                     popContexts(openBrace, b.location);
                     braceDepth--;
                     output(b);
+                    forbidPrefixes(t.location);
                     break;
                 case MacroName n:
                     macroCall(n);
@@ -208,10 +246,20 @@ public class MacroProcessor {
                 case MathToken mt:
                     mathMode = !mathMode;
                     output(mt);
+                    forbidPrefixes(t.location);
                     break;
                 default:
                     output(t);
+                    forbidPrefixes(t.location);
             }
+        }
+    }
+
+    private void forbidPrefixes(Location loc) throws SemanticError {
+        if (hasPrefixes()) {
+            throw new SemanticError("Prefixes (" + prefixes
+                    + ") must be followed by definition macro",
+                    loc);
         }
     }
 
@@ -778,10 +826,13 @@ public class MacroProcessor {
         }
     }
 
-    /** An input error that is considered semantic rather than lexical in nature. */
-    public static class SemanticError extends PrelatexError {
-        public SemanticError(String m, Location l) {
-            super(m, l);
+    void forbidPar(List<Token> body) throws SemanticError {
+        for (Token t : body) {
+            if (t instanceof Separator && t.chars().equals("\n") ||
+                    t instanceof MacroName m && m.name().equals("par"))
+                throw new SemanticError("paragraph break not allowed in non-long definition",
+                        t.location);
+
         }
     }
 

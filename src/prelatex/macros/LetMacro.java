@@ -16,6 +16,7 @@ public class LetMacro extends Macro {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
+            boolean globalLet = mp.hasPrefix("global");
             Token m = mp.nextNonblankToken();
             if (m instanceof MacroName nm) {
                 Token t = mp.nextToken();
@@ -23,8 +24,13 @@ public class LetMacro extends Macro {
                     t = mp.nextNonblankToken();
                 }
                 List<Token> replacement = List.of(t);
-                mp.define(nm.name(), new prelatex.macros.SimpleCommand(nm.name(),
-                        mp1 -> mp1.prependTokens(replacement)));
+                if (globalLet) {
+                    mp.globalDefine(nm.name(), new prelatex.macros.SimpleCommand(nm.name(),
+                            mp1 -> mp1.prependTokens(replacement)));
+                } else {
+                    mp.define(nm.name(), new prelatex.macros.SimpleCommand(nm.name(),
+                            mp1 -> mp1.prependTokens(replacement)));
+                }
             } else {
                 throw new SemanticError("\\let must be followed by macro name", m.location);
             }

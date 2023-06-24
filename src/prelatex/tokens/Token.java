@@ -24,4 +24,8 @@ public abstract class Token {
     @Override
     public abstract boolean equals(Object o);
     public abstract boolean canEqual(Object o);
+
+    @Override public int hashCode() {
+        return chars().hashCode();
+    }
 }

@@ -8,6 +8,7 @@ public class StandardContext {
         // builtin TeX macros
         mp.define("def", new Def());
         mp.define("gdef", new Gdef());
+        mp.define("edef", new Edef());
         mp.define("let", new LetMacro());
         mp.define("input", new InputMacro());
         mp.define("relax", new NoopMacro("relax", 0));
@@ -26,6 +27,9 @@ public class StandardContext {
         mp.define("begingroup", new BeginGroup());
         mp.define("endgroup", new EndGroup());
         mp.define("relax", new NoopMacro("relax", 0));
+        mp.define("outer", new PrefixMacro("outer"));
+        mp.define("long", new PrefixMacro("long"));
+        mp.define("global", new PrefixMacro("global"));
         // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
         mp.define("DeclareRobustCommand", new RenewCommand());
@@ -47,5 +51,6 @@ public class StandardContext {
         mp.define("typeout", new Typeout());
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
+        mp.define("WithSuffix", new PrefixMacro("WithSuffix"));
     }
 }

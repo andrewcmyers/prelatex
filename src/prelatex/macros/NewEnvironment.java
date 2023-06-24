@@ -35,6 +35,7 @@ public class NewEnvironment extends Macro {
                 throw new SemanticError("\\newenvironment name must be in braces (no })", location);
             }
             mp.skipBlanks();
+            mp.clearPrefixes();
             LaTeXParams parameters = mp.parseLaTeXParameters(location);
             List<Token> beginEnv = mp.parseMacroArg(none());
             List<Token> endEnv = mp.parseMacroArg(none());

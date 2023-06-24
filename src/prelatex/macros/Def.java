@@ -11,18 +11,25 @@ import prelatex.tokens.Token;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static prelatex.Main.Disposition.DROP;
 
+/** The core 'def' macro of TeX. */
 public class Def extends BuiltinMacro {
     public Def() {
-        super("def", 2);
+        this("def");
+    }
+    protected Def(String name) {
+        super(name, 2);
     }
 
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
             String name_s = mp.parseMacroName(location);
+            boolean longDef = mp.hasPrefix("long");
+            mp.clearPrefixes();
             List<Token> params = new ArrayList<>();
             int n = 0;
             while (!(mp.peekToken() instanceof OpenBrace)) {
@@ -39,12 +46,23 @@ public class Def extends BuiltinMacro {
                     }
                 }
             }
-            List<Token> body = mp.parseMacroArg(Maybe.none());
+            List<Token> body;
+            if (expandBody()) {
+                body = mp.parseMatched(Set.of(), true);
+            } else {
+                body = mp.parseMacroArg(Maybe.none());
+            }
+            if (!longDef) mp.forbidPar(body);
             if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
             makeDefinition(mp, name_s, new DefMacro(name_s, n, params, body));
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
         }
+    }
+
+    /** Should the macro body be expanded? */
+    protected boolean expandBody() {
+        return false;
     }
 
     /** Store this definition in the right place. */
