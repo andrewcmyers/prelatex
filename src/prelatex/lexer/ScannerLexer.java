@@ -36,6 +36,7 @@ public class ScannerLexer implements Lexer {
         setCatcode('}', END);
         setCatcode('$', MATH);
         setCatcode('&', ALIGN);
+        setCatcode('\r', IGNORED);
         setCatcode('\n', NEWLINE);
         setCatcode('#', PARAMETER);
         setCatcode('~', ACTIVE);
@@ -157,6 +158,8 @@ public class ScannerLexer implements Lexer {
             case INVALID: throw new LexicalError("Invalid character " + c, new ScannerLocn(location));
             case ACTIVE: return new ActiveCharMacro(nextChar(), new ScannerLocn(location));
             case MATH: return parseMathMode();
+            case NEWLINE:
+
             default:
                 if (Character.isWhitespace(c)) {
                     return parseWhitespace();
@@ -227,20 +230,20 @@ public class ScannerLexer implements Lexer {
         throw new Error("Impossible");
     }
 
-    private Separator parseWhitespace() {
+    private Token parseWhitespace() {
+        int numNewlines = 0;
+        Location where;
         try {
             StringBuilder b = new StringBuilder();
-            if (input.peek() == '%') { // comment
-                do {
-                    b.append(input.next());
-                } while (input.peek() != '\n');
-                b.append('\n');
-            } else {
-                while (Character.isWhitespace(input.peek())) {
-                    b.append(input.next());
-                }
+            where = new ScannerLocn(input.location());
+            while (Character.isWhitespace(input.peek())) {
+                if (getCatcode(input.peek()) == NEWLINE) numNewlines++;
+                b.append(input.next());
             }
-            return new Separator(b.toString(), new ScannerLocn(location));
+            if (numNewlines > 1) {
+                return new ParagraphBreak(b.toString(), where);
+            }
+            return new Separator(b.toString(), where);
         } catch (EOF exc) {
             throw new Error("Not possible");
         }

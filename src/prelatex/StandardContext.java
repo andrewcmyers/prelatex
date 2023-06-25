@@ -27,7 +27,7 @@ public class StandardContext {
         mp.define("begingroup", new BeginGroup());
         mp.define("endgroup", new EndGroup());
         mp.define("relax", new NoopMacro("relax", 0));
-        mp.define("outer", new PrefixMacro("outer"));
+        mp.define("outer", new PrefixMacro("outer")); // Not enforced
         mp.define("long", new PrefixMacro("long"));
         mp.define("global", new PrefixMacro("global"));
         mp.define("uppercase", new Uppercase());

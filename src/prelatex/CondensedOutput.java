@@ -12,6 +12,7 @@ public class CondensedOutput implements ProcessorOutput {
     private PrintWriter out;
     private boolean removeComments;
     private boolean lastWasAlphaMacro = false;
+    private boolean lastWasNewline = false;
 
     private ArrayList<Token> outputLog; // null if debugging turned off
     private static boolean DEBUG_OUTPUT = false;
@@ -24,6 +25,15 @@ public class CondensedOutput implements ProcessorOutput {
     @Override
     public void output(Token t) throws PrelatexError {
         if (DEBUG_OUTPUT) outputLog.add(t);
+        if (t instanceof Separator && t.chars().contains("\n")) {
+            if (lastWasNewline) {
+                out.print(t.chars().replace("\n", ""));
+                return; // don't create fake paragraph break
+            }
+            lastWasNewline = true;
+        } else {
+            lastWasNewline = false;
+        }
         String s = t.chars();
         if (Character.isAlphabetic(s.charAt(0)) && lastWasAlphaMacro) {
             out.print(' ');
