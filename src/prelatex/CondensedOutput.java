@@ -9,13 +9,13 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class CondensedOutput implements ProcessorOutput {
-    private PrintWriter out;
-    private boolean removeComments;
+    private final PrintWriter out;
+    private final boolean removeComments;
     private boolean lastWasAlphaMacro = false;
     private boolean lastWasNewline = false;
 
     private ArrayList<Token> outputLog; // null if debugging turned off
-    private static boolean DEBUG_OUTPUT = false;
+    private final static boolean DEBUG_OUTPUT = false;
 
     CondensedOutput(PrintWriter out, boolean removeComments) {
         this.out = out;
@@ -23,7 +23,7 @@ public class CondensedOutput implements ProcessorOutput {
         if (DEBUG_OUTPUT) outputLog = new ArrayList<>();
     }
     @Override
-    public void output(Token t) throws PrelatexError {
+    public void output(Token t) {
         if (DEBUG_OUTPUT) outputLog.add(t);
         if (t instanceof Separator && t.chars().contains("\n")) {
             if (lastWasNewline) {

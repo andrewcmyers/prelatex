@@ -5,5 +5,5 @@ import prelatex.tokens.Token;
 
 /** A place for the macro processor to send its output. */
 public interface ProcessorOutput {
-    void output(Token t) throws PrelatexError;
+    void output(Token t);
 }

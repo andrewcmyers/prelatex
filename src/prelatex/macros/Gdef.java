@@ -5,7 +5,7 @@ public class Gdef extends Def {
         super("gdef");
     }
     @Override
-    protected void makeDefinition(MacroProcessor mp, String name, DefMacro m) {
+    protected void defineMacro(MacroProcessor mp, String name, DefMacro m) {
         mp.globalDefine(name, m);
     }
 }

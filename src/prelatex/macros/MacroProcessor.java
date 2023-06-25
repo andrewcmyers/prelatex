@@ -138,13 +138,12 @@ public class MacroProcessor {
 
     }
 
-
     /** Generate output. (Convenience method) */
-    void output(Token ...s) throws PrelatexError {
+    void output(Token ...s) {
         output(List.of(s));
     }
     /** Generate output. */
-    void output(List<Token> lst) throws PrelatexError {
+    void output(List<Token> lst) {
         for (Token t : lst) {
             out.output(t);
         }

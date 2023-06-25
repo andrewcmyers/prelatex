@@ -5,15 +5,15 @@ import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
 import prelatex.macros.MacroProcessor.SemanticError;
-import prelatex.tokens.MacroParam;
-import prelatex.tokens.OpenBrace;
-import prelatex.tokens.Token;
+import prelatex.tokens.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import prelatex.Main.Disposition;
 import static prelatex.Main.Disposition.DROP;
+import static prelatex.Main.Disposition.KEEP;
 
 /** The core 'def' macro of TeX. */
 public class Def extends BuiltinMacro {
@@ -53,20 +53,35 @@ public class Def extends BuiltinMacro {
                 body = mp.parseMacroArg(Maybe.none());
             }
             if (!longDef) mp.forbidPar(body);
-            if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
-            makeDefinition(mp, name_s, new DefMacro(name_s, n, params, body));
+            Disposition disposition = mp.macroDisposition.get(name_s);
+            makeDefinition(mp, name_s, n, params, body, disposition, location);
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
         }
     }
 
-    /** Should the macro body be expanded? */
+    /** Should the macro body be expanded? Overridden by \edef */
     protected boolean expandBody() {
         return false;
     }
 
     /** Store this definition in the right place. */
-    protected void makeDefinition(MacroProcessor mp, String name, DefMacro m) {
-        mp.define(name, m);
+    protected void makeDefinition(MacroProcessor mp, String mname, int numArgs, List<Token> params,
+                                  List<Token> body, Disposition disposition, Location location) {
+        if (disposition == DROP) body = List.of();
+        if (disposition == KEEP) {
+            mp.output(new MacroName(name, location));
+            mp.output(new MacroName(mname, location));
+            mp.output(params);
+            mp.output(new OpenBrace(location));
+            mp.output(body);
+            mp.output(new CloseBrace(location));
+        } else {
+            defineMacro(mp, mname, new DefMacro(mname, numArgs, params, body));
+        }
+    }
+
+    protected void defineMacro(MacroProcessor mp, String mname, DefMacro macro) {
+        mp.define(mname, macro);
     }
 }

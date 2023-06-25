@@ -2,6 +2,7 @@ package prelatex.macros;
 
 import cms.util.maybe.Maybe;
 import easyIO.EOF;
+import prelatex.Main;
 import prelatex.Namespace;
 import prelatex.PrelatexError;
 import prelatex.lexer.ScannerLexer;
@@ -10,9 +11,10 @@ import prelatex.tokens.*;
 import prelatex.macros.MacroProcessor.SemanticError;
 
 import static cms.util.maybe.Maybe.none;
-import static cms.util.maybe.Maybe.some;
 import static prelatex.Main.Disposition.DROP;
+import static prelatex.Main.Disposition.KEEP;
 import static prelatex.macros.MacroProcessor.LaTeXParams;
+import prelatex.Main.Disposition;
 
 import java.util.List;
 
@@ -42,22 +44,23 @@ public class NewCommand extends Macro {
                 mp.nextToken();
                 mp.skipBlanks();
             }
-            String name_s = mp.parseMacroName(location);
+            String macroName = mp.parseMacroName(location);
+            Disposition disposition = mp.macroDisposition.get(macroName);
             boolean expectSuffix = mp.hasPrefix("WithSuffix");
             boolean dropDefn = false;
             mp.clearPrefixes();
             mp.skipBlanks();
-            String definedName = name_s;
+            String definedName = macroName;
             if (expectSuffix) {
                 Token t = mp.nextToken();
-                definedName = name_s + t.chars();
-                mp.recordSuffix(name_s, t);
+                definedName = macroName + t.chars();
+                mp.recordSuffix(macroName, t);
             }
             try {
                 mp.lookup(definedName);
                 switch (name) {
                     case "newcommand":
-                        throw new SemanticError("Macro \\" + name_s + " already defined", location);
+                        throw new SemanticError("Macro \\" + macroName + " already defined", location);
                     case "renewcommand":
                     case "DeclareRobustCommand":
                         break;
@@ -78,13 +81,38 @@ public class NewCommand extends Macro {
             }
             List<Token> body = mp.parseMacroArg(none());
             if (!longdef) mp.forbidPar(body);
-            if (mp.macroDisposition.get(name_s) == DROP) body = List.of();
-            if (!dropDefn) {
-                Macro m = new LaTeXMacro(definedName, parameters.numArgs(), parameters.defaultArgs(), body);
-                mp.define(name_s, m);
-            }
+            if (!dropDefn)
+                makeDefinition(mp, definedName, parameters, body, disposition, location);
         } catch (EOF exc) {
             throw new ScannerLexer.LexicalError("Unexpected end of file in \\newcommand definition", location);
+        }
+    }
+
+    private void makeDefinition(MacroProcessor mp, String mname, LaTeXParams parameters, List<Token> body, Disposition disposition, Location location) {
+        if (disposition == DROP) body = List.of();
+        Macro m = new LaTeXMacro(mname, parameters.numArgs(), parameters.defaultArgs(), body);
+        if (disposition == KEEP) {
+            mp.output(new MacroName(name, location));
+            mp.output(new OpenBrace(location));
+            mp.output(new MacroName(mname, location));
+            mp.output(new CloseBrace(location));
+            if (parameters.numArgs() > 0) {
+                mp.output(new CharacterToken('[', location));
+                mp.output(new StringToken(Integer.toString(parameters.numArgs()), location));
+                mp.output(new CharacterToken(']', location));
+            }
+            if (parameters.defaultArgs().size() > 0) {
+                for (List<Token> arg : parameters.defaultArgs()) {
+                    mp.output(new CharacterToken('[', location));
+                    mp.output(arg);
+                    mp.output(new CharacterToken(']', location));
+                }
+            }
+            mp.output(new OpenBrace(location));
+            mp.output(body);
+            mp.output(new CloseBrace(location));
+        } else {
+            mp.define(mname, m);
         }
     }
 }
