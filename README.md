@@ -13,15 +13,17 @@ or in local packages are expanded according to their definitions.
 
 Comments can be optionally removed.
 
-The environment variable TEXINPUTS is used  in the usual way as a search path
+The environment variable TEXINPUTS is used in the usual way as a search path
 for additional source files.
 
-The emulation of TeX and LaTeX is far from perfect (and can never be perfect).
-I am hoping that people will contribute to improving its capabilities to make
-this a better tool. Some known (and fixable) issues are:
+The emulation of TeX and LaTeX is far from perfect (and can never be perfect,
+since in general we do not want to expand packages). I am hoping that people
+will contribute to improving its capabilities to make this a better tool. Some
+known (and fixable) issues are:
 
-* Various other builtin TeX macros are not supported, like \noexpand, \string, \uppercase, \lowercase, \number,
-  \message, \afterassignment, \aftergroup, \ignorespaces, \futurelet, etc.
+* Various other built-in TeX macros are not yet supported, like \noexpand, \string, \uppercase, \lowercase, \number,
+  \message, \afterassignment, \aftergroup, \ignorespaces, \futurelet, etc. These are of course macros that
+  should not appear in pure LaTeX documents, but are useful for expanding some packages.
 
 preLaTeX is not integrated with BibTeX, which should not be a problem for most uses.
 

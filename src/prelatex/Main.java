@@ -46,6 +46,9 @@ public class Main {
     /** Whether to remove comments */
     private boolean noComments = false;
 
+    /** Whether to print out all the defined macros */
+    boolean dump_macros = false;
+
     /** How to handle packages and macro named.
      *  EXPAND: read the package or expand the macro using its definition
      *  KEEP: leave the package unread, or don't expand the macro even if the definition is known.
@@ -60,7 +63,7 @@ public class Main {
         try {
             new Main(args).run();
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println(e);
         }
     }
 
@@ -69,7 +72,7 @@ public class Main {
     }
 
     void usage() throws Exception {
-        throw new Exception("Usage: prelatex [--nocomments] [--config <config file>] [ --drop <pkg> ] ... [ --expand <pkg> ] ...  <filename.tex> ...");
+        throw new Exception("Usage: prelatex [--nocomments] [--dump_macros] [--config <config file>] [ --drop <pkg> ] ... [ --expand <pkg> ] ...  <filename.tex> ...");
     }
 
     protected void parseArgs(String[] args) throws Exception {
@@ -88,6 +91,8 @@ public class Main {
                 packageDisposition.put(args[++optind], EXPAND);
             } else if (opt.equals("--drop")) {
                 packageDisposition.put(args[++optind], DROP);
+            } else if (opt.equals("--dump_macros")) {
+                dump_macros = true;
             } else if (opt.equals("--nocomments")) {
                 noComments = true;
             } else if (opt.equals("--config")) {
@@ -173,7 +178,6 @@ public class Main {
         }
     }
 
-
     void run() {
         try {
             Context<Lexer.CatCode> catcodes = new Context<>();
@@ -182,6 +186,7 @@ public class Main {
             PrintWriter err = new PrintWriter(System.err, true);
             processor = new MacroProcessor(in, out, err, searchPath, catcodes);
             StandardContext.initialize(processor);
+            if (dump_macros) processor.dumpMacros();
             processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {

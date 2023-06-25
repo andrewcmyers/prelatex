@@ -1,9 +1,6 @@
 package prelatex;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /** A namespace that supports pushing and popping other namespaces.
  *  The current namespace can be either immutable or mutable. The initial
@@ -16,24 +13,8 @@ public class Context<T> implements Namespace<T> {
     interface Node<T> {
 		T get(String name) throws LookupFailure;
 		void put(String name, T value);
-	}
-	
-	static class FixedNode<T> implements Node<T> {
-		Namespace<T> fixed_mappings; // may be null
 
-		public FixedNode(Namespace<T> n) {
-			fixed_mappings = n;
-		}
-
-		@Override
-		public T get(String name) throws LookupFailure {
-			return fixed_mappings.lookup(name);
-		}
-
-		@Override
-		public void put(String name, T value) {
-			throw new UnsupportedOperationException();
-		}
+		Iterable<String> keys();
 	}
 	
 	static class MutableNode<T> implements Node<T> {
@@ -50,9 +31,14 @@ public class Context<T> implements Namespace<T> {
 		public void put(String name, T value) {
 			mappings.put(name, value);			
 		}
+
+		@Override
+		public Iterable<String> keys() {
+			return mappings.keySet();
+		}
 	}
 
-	private List<Node<T>> nodes;
+	private final List<Node<T>> nodes;
 	{
 		nodes = new ArrayList<>();
 		nodes.add(new MutableNode<>());
@@ -60,11 +46,11 @@ public class Context<T> implements Namespace<T> {
 
 	static public LookupFailure lookupFailed = new LookupFailure();
 	
-	public T lookup(String name) throws LookupFailure {
+	public T lookup(String key) throws LookupFailure {
 		for (int i = nodes.size() - 1; i >= 0; i--) {
 			Node<T> n = nodes.get(i);
 			try {
-				return n.get(name);
+				return n.get(key);
 			} catch (LookupFailure e) {
 				// try the next node up the stack
 			}
@@ -72,22 +58,26 @@ public class Context<T> implements Namespace<T> {
 		throw lookupFailed;		
 	}
 
+	@Override
+	public Iterable<String> keys() {
+		Set<String> result = new HashSet<>();
+		for (Node<T> node : nodes) {
+			for (String k : node.keys()) result.add(k);
+		}
+		return result;
+	}
+
 	public void push() {
 		nodes.add(new MutableNode<>());
 	}
 	
-	public void push(Namespace<T> n) {
-		nodes.add(new FixedNode<T>(n));
-	}
-
 	public void pop() {
 		nodes.remove(nodes.size()-1);
 	}
 	
-    // defn may be null
-	public void add(String name, T defn) {
-		assert defn != null;
-		nodes.get(nodes.size() - 1).put(name,  defn);
+	public void add(String name, T definition) {
+		assert definition != null;
+		nodes.get(nodes.size() - 1).put(name,  definition);
 	}
 
 	public void setGlobal(String name, T m) {

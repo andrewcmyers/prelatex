@@ -13,8 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SimpleMacro extends LaTeXMacro {
-    public SimpleMacro(String name, String number) {
-        super(name, 0, List.of(), explode(number, new SyntheticLocn("macro defn of " + name)));
+    public SimpleMacro(String name, String text) {
+        super(name, 0, List.of(), explode(text, new SyntheticLocn("macro defn of " + name)));
     }
 
     private static List<Token> explode(String s, Location l) {

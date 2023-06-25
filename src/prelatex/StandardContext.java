@@ -30,6 +30,8 @@ public class StandardContext {
         mp.define("outer", new PrefixMacro("outer"));
         mp.define("long", new PrefixMacro("long"));
         mp.define("global", new PrefixMacro("global"));
+        mp.define("uppercase", new Uppercase());
+        mp.define("lowercase", new Lowercase());
         // builtin LaTeX macros
         mp.define("newcommand", new NewCommand());
         mp.define("DeclareRobustCommand", new RenewCommand());
@@ -49,6 +51,9 @@ public class StandardContext {
         mp.define("AtEndDocument", new AtEndDocument());
         mp.define("protect", new NoopMacro("protect", 0));
         mp.define("typeout", new Typeout());
+        mp.define("ensuremath", new EnsureMath());
+        mp.define("[", new BeginDisplayMath());
+        mp.define("]", new EndDisplayMath());
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
         mp.define("WithSuffix", new PrefixMacro("WithSuffix"));

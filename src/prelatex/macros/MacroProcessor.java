@@ -95,6 +95,16 @@ public class MacroProcessor {
         }
     }
 
+    public void dumpMacros() {
+        TreeSet<String> names = new TreeSet<>(String::compareToIgnoreCase);
+        for (String name : macros.keys()) {
+            names.add(name);
+        }
+        for (String name : names) {
+            System.out.println(name);
+        }
+    }
+
     /** An input error that is considered semantic rather than lexical in nature. */
     public static class SemanticError extends PrelatexError {
         public SemanticError(String m, Location l) {
