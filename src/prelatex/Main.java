@@ -63,7 +63,7 @@ public class Main {
         try {
             new Main(args).run();
         } catch (Exception e) {
-            System.err.println(e);
+            System.err.println(e.getMessage());
         }
     }
 
