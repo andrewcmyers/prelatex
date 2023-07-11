@@ -1,15 +1,19 @@
 # preLaTeX
 
-This tool converts LaTeX source(s) into a single equivalent LaTeX output file, while removing various constructs by expanding them:
+This tool converts LaTeX source(s) into a single equivalent LaTeX output file, while removing various constructs by expanding them.
+This transformation is useful for producing LaTeX source files that are accepted by picky publishers like arXiv and ACM.
+
+Eliminated constructs include:
 
 * \newcommand and \newenvironment definitions
-* \*def definitions
+* \*def definitions (TeX definitions)
 * various conditionals (\newif, \ifx, \ifcase, \ifmmode, etc.)
-* file read using \input
+* files read using \input
 * some more advanced constructs: \csname, \expandafter, ...
 
 External packages are not read and macros defined in them are not replaced. Macros defined in the file
-or in local packages are expanded according to their definitions.
+or in local packages are expanded according to their definitions. Macros not known to preLaTeX, or
+specified as "kept", are left unexpanded.
 
 Comments can be optionally removed.
 
@@ -66,6 +70,24 @@ The following options may be specified:
     TEXINPUTS [ paper/macros, paper/sections ]
     ```
 
+It is also possible to specify some of these options on the command line.
+
+## Command-line options
+
+preLaTeX has a number of options for controlling how the file is interpreted:
+
+  * `--nocomments`: remove comments from the output
+  * `--dump_macros`: print out all macros known by preLaTeX
+  * `--config <config file>`: specify configuration file
+  * `--drop <pkg>`: equivalent to `drop package: <pkg>` in the configuration file
+  * `--expand <pkg>`: equivalent to `expand package: <pkg>` in the configuration file
+
+After the command line options, one or more input LaTeX files may be specified. These are read in sequence, so the default behavior can
+also be modified by creating files of macro definitions to be read before the main document file. A typical invocation might
+look as follows:
+
+    prelatex --config config.pltx overrides.tex top.tex
+
 ## Building
 
 To build you can use Gradle:
@@ -80,12 +102,7 @@ If you run into Java version incompatibility issues, probably Gradle is building
 of Java than your default installation of Java. Try setting the environment variable `JAVA_HOME` to
 the appropriate Java installation (which must be at least version 17).
 
-preLaTeX has a number of options for controlling how the file is interpreted. Typically, you
-will want a configuration file (the --config option) to define how to handle various packages. You may
-also want to define a prefix .tex file to override some of the definitions. So a typical invocation might
-look like:
 
-    prelatex --config config.pltx overrides.tex top.tex
 
 You can also install the prelatex script on your system by running `gradle install`. This needs to
 be run using `sudo` so the necessary files can be copied.
