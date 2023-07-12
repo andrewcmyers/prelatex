@@ -105,7 +105,7 @@ the appropriate Java installation (which must be at least version 17).
 
 
 You can also install the prelatex script on your system by running `gradle install`. This needs to
-be run using `sudo` so the necessary files can be copied.
+be run using `sudo` so the necessary files can be copied. It installs into `/usr/local/bin` and `/usr/local/share/prelatex`.
 
 ### IntelliJ
 
