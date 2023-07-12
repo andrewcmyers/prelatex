@@ -34,7 +34,7 @@ preLaTeX is not integrated with BibTeX, which should not be a problem for most u
 ## Configuration
 
 The default behavior of preLaTeX can be modified by using a configuration file, specified using the `--config`
-option. The configuration file uses [LWON dictionary syntax](https://github.com/andrewcmyers/lwon)
+option. The configuration file uses [LWON dictionary syntax](https://github.com/andrewcmyers/lwon).
 The following options may be specified:
 
 - `comments: false`
