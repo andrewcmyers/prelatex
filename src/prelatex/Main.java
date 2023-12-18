@@ -186,7 +186,10 @@ public class Main {
             PrintWriter err = new PrintWriter(System.err, true);
             processor = new MacroProcessor(in, out, err, searchPath, catcodes);
             StandardContext.initialize(processor);
-            if (dump_macros) processor.dumpMacros();
+            if (dump_macros) {
+                processor.dumpMacros();
+                return;
+            }
             processor.setDispositions(packageDisposition, macroDisposition);
             processor.run();
         } catch (PrelatexError|FileNotFoundException e1) {

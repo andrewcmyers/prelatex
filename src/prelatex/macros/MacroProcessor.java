@@ -98,7 +98,12 @@ public class MacroProcessor {
     public void dumpMacros() {
         TreeSet<String> names = new TreeSet<>(String::compareToIgnoreCase);
         for (String name : macros.keys()) {
-            names.add(name);
+            try {
+                Macro m = macros.lookup(name);
+                names.add(m.name);
+            } catch (Namespace.LookupFailure e) {
+                throw new Error("Can't happen.");
+            }
         }
         for (String name : names) {
             System.out.println(name);
