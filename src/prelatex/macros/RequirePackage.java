@@ -2,6 +2,7 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
 import prelatex.tokens.*;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import static prelatex.Main.Disposition.EXPAND;
 public class RequirePackage extends LaTeXBuiltin {
 
     public RequirePackage(String name) {
-        super(name, 2, List.of(List.of()));
+        super(new MacroName(name, new SyntheticLocn("RequirePackage definition")), 2, List.of(List.of()));
     }
 
     @Override

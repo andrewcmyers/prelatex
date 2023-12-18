@@ -44,17 +44,17 @@ public class NewCommand extends Macro {
                 mp.nextToken();
                 mp.skipBlanks();
             }
-            String macroName = mp.parseMacroName(location);
+            MacroName macroName = mp.parseMacroName(location);
             Disposition disposition = mp.macroDisposition.get(macroName);
             boolean expectSuffix = mp.hasPrefix("WithSuffix");
             boolean dropDefn = false;
             mp.clearPrefixes();
             mp.skipBlanks();
-            String definedName = macroName;
+            MacroName definedName = macroName;
             if (expectSuffix) {
                 Token t = mp.nextToken();
-                definedName = macroName + t.chars();
-                mp.recordSuffix(macroName, t);
+                definedName = new MacroName(macroName + t.chars(), macroName.location);
+                mp.recordSuffix(macroName.chars(), t);
             }
             try {
                 mp.lookup(definedName);
@@ -88,13 +88,13 @@ public class NewCommand extends Macro {
         }
     }
 
-    private void makeDefinition(MacroProcessor mp, String mname, LaTeXParams parameters, List<Token> body, Disposition disposition, Location location) {
+    private void makeDefinition(MacroProcessor mp, MacroName mname, LaTeXParams parameters, List<Token> body, Disposition disposition, Location location) {
         if (disposition == DROP) body = List.of();
         Macro m = new LaTeXMacro(mname, parameters.numArgs(), parameters.defaultArgs(), body);
         if (disposition == KEEP) {
             mp.output(new MacroName(name, location));
             mp.output(new OpenBrace(location));
-            mp.output(new MacroName(mname, location));
+            mp.output(mname);
             mp.output(new CloseBrace(location));
             if (parameters.numArgs() > 0) {
                 mp.output(new CharacterToken('[', location));
@@ -112,7 +112,7 @@ public class NewCommand extends Macro {
             mp.output(body);
             mp.output(new CloseBrace(location));
         } else {
-            mp.define(mname, m);
+            mp.define(mname.toString(), m);
         }
     }
 }

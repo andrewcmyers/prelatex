@@ -1,6 +1,7 @@
 package prelatex.macros;
 
 import prelatex.lexer.Location;
+import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
 
 import java.util.List;
@@ -14,7 +15,7 @@ public class DefMacro extends TeXMacro {
         return true;
     }
 
-    protected DefMacro(String name, int numArgs, List<Token> pattern, List<Token> body) {
+    protected DefMacro(MacroName name, int numArgs, List<Token> pattern, List<Token> body) {
         super(name, numArgs);
         this.body = body;
         setPattern(pattern);

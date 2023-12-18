@@ -4,6 +4,7 @@ import cms.util.maybe.Maybe;
 import easyIO.EOF;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.tokens.MacroName;
 import prelatex.tokens.MacroParam;
 import prelatex.tokens.Token;
 
@@ -17,7 +18,7 @@ abstract public class TeXMacro extends Macro {
     protected List<Token> pattern;
 
     /** Create a named macro. */
-    public TeXMacro(String name, int numArgs) {
+    public TeXMacro(MacroName name, int numArgs) {
         super(name);
         this.numArgs = numArgs;
     }

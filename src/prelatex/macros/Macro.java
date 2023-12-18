@@ -2,6 +2,8 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
+import prelatex.tokens.MacroName;
 
 /** Macros may be:
  * 1. user-defined macros introduced by \newcommand or \def, \gdef, etc., for which there is
@@ -13,9 +15,16 @@ import prelatex.lexer.Location;
  * B. LaTeX-style macros with more restricted calling syntax but possibly an optional argument
  */
 abstract public class Macro {
+    /** The name of the macro. Does not include the initial backslash for macros that
+     *  are not active characters. */
     final String name;
+    boolean active;
     protected Macro(String name) {
-        this.name = name;
+        this(new MacroName(name, new SyntheticLocn("Definition of " + name)));
+    }
+    protected Macro(MacroName name) {
+        this.name = name.chars();
+        active = name.active();
     }
     abstract public void apply(MacroProcessor mp, Location location) throws PrelatexError;
     public boolean isConditional() {

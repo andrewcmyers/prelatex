@@ -2,6 +2,8 @@ package prelatex.macros;
 
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
+import prelatex.tokens.MacroName;
 import prelatex.tokens.Token;
 
 import java.util.ArrayList;
@@ -15,12 +17,18 @@ abstract public class LaTeXBuiltin extends BuiltinMacro {
     static final List<List<Token>> noDefaultArgs = new ArrayList<>();
 
     protected LaTeXBuiltin(String n, int numArgs, List<List<Token>> defaultArgs) {
+        this(new MacroName(n, new SyntheticLocn("Definition of " +n)), numArgs, defaultArgs);
+    }
+    protected LaTeXBuiltin(MacroName n, int numArgs, List<List<Token>> defaultArgs) {
         super(n, numArgs);
         this.defaultArgs = defaultArgs;
     }
-    protected LaTeXBuiltin(String n, int numArgs) {
+    protected LaTeXBuiltin(MacroName n, int numArgs) {
         super(n, numArgs);
         this.defaultArgs = noDefaultArgs;
+    }
+    protected LaTeXBuiltin(String n, int numArgs) {
+        this(new MacroName(n, new SyntheticLocn("Definition of " + n)), numArgs);
     }
 
     @Override

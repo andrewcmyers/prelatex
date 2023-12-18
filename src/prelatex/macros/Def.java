@@ -27,7 +27,7 @@ public class Def extends BuiltinMacro {
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
         try {
-            String name_s = mp.parseMacroName(location);
+            MacroName name_s = mp.parseMacroName(location);
             boolean longDef = mp.hasPrefix("long");
             mp.clearPrefixes();
             List<Token> params = new ArrayList<>();
@@ -53,7 +53,7 @@ public class Def extends BuiltinMacro {
                 body = mp.parseMacroArg(Maybe.none());
             }
             if (!longDef) mp.forbidPar(body);
-            Disposition disposition = mp.macroDisposition.get(name_s);
+            Disposition disposition = mp.macroDisposition.get(name_s.toString());
             makeDefinition(mp, name_s, n, params, body, disposition, location);
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
@@ -66,12 +66,11 @@ public class Def extends BuiltinMacro {
     }
 
     /** Store this definition in the right place. */
-    protected void makeDefinition(MacroProcessor mp, String mname, int numArgs, List<Token> params,
+    protected void makeDefinition(MacroProcessor mp, MacroName mname, int numArgs, List<Token> params,
                                   List<Token> body, Disposition disposition, Location location) {
         if (disposition == DROP) body = List.of();
         if (disposition == KEEP) {
-            mp.output(new MacroName(name, location));
-            mp.output(new MacroName(mname, location));
+            mp.output(mname);
             mp.output(params);
             mp.output(new OpenBrace(location));
             mp.output(body);
@@ -81,7 +80,7 @@ public class Def extends BuiltinMacro {
         }
     }
 
-    protected void defineMacro(MacroProcessor mp, String mname, DefMacro macro) {
-        mp.define(mname, macro);
+    protected void defineMacro(MacroProcessor mp, MacroName mname, DefMacro macro) {
+        mp.define(mname.toString(), macro);
     }
 }

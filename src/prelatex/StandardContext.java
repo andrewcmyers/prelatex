@@ -56,6 +56,6 @@ public class StandardContext {
         mp.define("]", new EndDisplayMath());
         // standardish macros from LaTeX packages like etoolbox
         mp.define("ifbool", new IfBool());
-        mp.define("WithSuffix", new PrefixMacro("WithSuffix"));
+        mp.define("WithSuffix", new PrefixMacro("WithSuffix")); // eTeX feature
     }
 }

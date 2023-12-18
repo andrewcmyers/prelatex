@@ -4,6 +4,7 @@ import easyIO.EOF;
 import prelatex.Namespace;
 import prelatex.PrelatexError;
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
 import prelatex.tokens.CharacterToken;
 import prelatex.tokens.MacroName;
 import prelatex.tokens.Separator;
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class CSName extends Macro {
     public CSName() {
-        super("csname");
+        super(new MacroName("csname", new SyntheticLocn("csname definition")));
     }
 
     @Override

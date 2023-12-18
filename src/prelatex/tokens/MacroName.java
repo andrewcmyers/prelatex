@@ -1,14 +1,25 @@
 package prelatex.tokens;
 
 import prelatex.lexer.Location;
+import prelatex.lexer.SyntheticLocn;
 
 /** A token of the form \abCd...
  */
 public class MacroName extends Token {
     private final String name;
+
+    public MacroName(String name) {
+        this(name, new SyntheticLocn("Definition of " + name));
+    }
+
     public MacroName(String name, Location loc) {
         super(loc);
         this.name = name;
+    }
+
+    /** Whether this macro name is an active character */
+    public boolean active() {
+        return false;
     }
 
     @Override

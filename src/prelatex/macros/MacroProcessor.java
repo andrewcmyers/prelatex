@@ -650,19 +650,18 @@ public class MacroProcessor {
     }
 
     /** Parse a legal macro name, including the initial backslash */
-    public String parseMacroName(Location location) throws PrelatexError {
+    public MacroName parseMacroName(Location location) throws PrelatexError {
         try {
             skipBlanks();
             Token t = peekToken();
             List<Token> nameTokens = parseMacroArg(Maybe.none());
             if (nameTokens.size() == 1 && nameTokens.get(0) instanceof MacroName mname) {
-                return mname.name();
+                return mname;
             }
             throw new SemanticError("Invalid macro name : " + flattenToString(nameTokens), t.location);
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of input, expecting macro name", location);
         }
-
     }
     /** Parse a string of legal macro name characters */
     public String parseLongMacroName(Location location) throws LexicalError {
