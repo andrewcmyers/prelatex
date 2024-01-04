@@ -23,7 +23,7 @@ abstract public class Macro {
         this(new MacroName(name, new SyntheticLocn("Definition of " + name)));
     }
     protected Macro(MacroName name) {
-        this.name = name.chars();
+        this.name = name.name();
         active = name.active();
     }
     abstract public void apply(MacroProcessor mp, Location location) throws PrelatexError;

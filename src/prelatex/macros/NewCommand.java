@@ -112,7 +112,7 @@ public class NewCommand extends Macro {
             mp.output(body);
             mp.output(new CloseBrace(location));
         } else {
-            mp.define(mname.toString(), m);
+            mp.define(mname.name(), m);
         }
     }
 }

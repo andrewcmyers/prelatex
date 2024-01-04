@@ -81,6 +81,6 @@ public class Def extends BuiltinMacro {
     }
 
     protected void defineMacro(MacroProcessor mp, MacroName mname, DefMacro macro) {
-        mp.define(mname.toString(), macro);
+        mp.define(mname.name(), macro);
     }
 }
