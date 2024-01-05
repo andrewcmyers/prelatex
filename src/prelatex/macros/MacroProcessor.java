@@ -24,7 +24,9 @@ import static prelatex.lexer.Lexer.CatCode.INVALID;
 
 /** The core macro processing algorithm. */
 public class MacroProcessor {
-    /** Where error messages are sent. */
+    /**
+     * Where error messages are sent.
+     */
     private final PrintWriter err;
     private static final boolean DEBUG_MACROS = false;
 
@@ -37,13 +39,19 @@ public class MacroProcessor {
      */
     private final Context<Lexer.CatCode> catcodes;
 
-    /** Suffixes supported by macros. */
+    /**
+     * Suffixes supported by macros.
+     */
     private final Context<Set<Token>> macroSuffixes = new Context<>();
 
-    /** Where token input comes from. */
+    /**
+     * Where token input comes from.
+     */
     private final Lexer lexer;
 
-    /** Where processed output is sent. */
+    /**
+     * Where processed output is sent.
+     */
     private final ProcessorOutput out;
 
     /**
@@ -57,7 +65,9 @@ public class MacroProcessor {
      */
     private final Deque<Token> pendingTokens = new LinkedList<>();
 
-    /** Are we in math mode? */
+    /**
+     * Are we in math mode?
+     */
     boolean mathMode = false;
 
     /**
@@ -65,7 +75,9 @@ public class MacroProcessor {
      */
     Set<String> packagesRead = new HashSet<>();
 
-    /** Packages and macros requiring special treatment. */
+    /**
+     * Packages and macros requiring special treatment.
+     */
     Map<String, Disposition> packageDisposition;
     Map<String, Disposition> macroDisposition;
 
@@ -74,17 +86,21 @@ public class MacroProcessor {
     boolean hasPrefixes() {
         return !prefixes.isEmpty();
     }
+
     boolean hasPrefix(String s) {
         return prefixes.contains(s);
     }
+
     void clearPrefixes() {
         prefixes = new HashSet<>();
     }
+
     public void setPrefix(String name) {
         prefixes.add(name);
     }
 
-    /** Record that the named macro has a suffixed definition.
+    /**
+     * Record that the named macro has a suffixed definition.
      */
     public void recordSuffix(String macroName, Token suffix) {
         try {
@@ -110,17 +126,21 @@ public class MacroProcessor {
         }
     }
 
-    /** An input error that is considered semantic rather than lexical in nature. */
+    /**
+     * An input error that is considered semantic rather than lexical in nature.
+     */
     public static class SemanticError extends PrelatexError {
         public SemanticError(String m, Location l) {
             super(m, l);
         }
     }
-    /** Create a macro processor instance.
+
+    /**
+     * Create a macro processor instance.
      *
-     * @param lexer The source of input tokens
-     * @param out The place where output is sent
-     * @param err The place where error messages are sent
+     * @param lexer      The source of input tokens
+     * @param out        The place where output is sent
+     * @param err        The place where error messages are sent
      * @param searchPath The place to look for named files (packages, included files)
      */
     public MacroProcessor(Lexer lexer, ProcessorOutput out, PrintWriter err, Files searchPath,
@@ -132,22 +152,30 @@ public class MacroProcessor {
         this.catcodes = catcodes;
     }
 
-    /** Add a macro definition. */
+    /**
+     * Add a macro definition.
+     */
     public void define(String name, Macro m) {
         macros.add(name, m);
         reportDebug("Defining macro \"\\" + name + "\"");
     }
+
     public void globalDefine(String name, Macro m) {
         macros.setGlobal(name, m);
         reportDebug("Defining global macro \"\\" + name + "\"");
 
     }
 
-    /** Generate output. (Convenience method) */
-    void output(Token ...s) {
+    /**
+     * Generate output. (Convenience method)
+     */
+    void output(Token... s) {
         output(List.of(s));
     }
-    /** Generate output. */
+
+    /**
+     * Generate output.
+     */
     void output(List<Token> lst) {
         for (Token t : lst) {
             out.output(t);
@@ -175,14 +203,16 @@ public class MacroProcessor {
     /**
      * Put tokens at the head of the input sequence.
      */
-    void prependTokens(Token ...tokens) {
+    void prependTokens(Token... tokens) {
         for (int j = tokens.length - 1; j >= 0; j--) {
             pendingTokens.addFirst(tokens[j]);
         }
     }
 
-    /** Run the macro processor until the end of input is reached or
-     * an error is encountered. */
+    /**
+     * Run the macro processor until the end of input is reached or
+     * an error is encountered.
+     */
     public void run() throws PrelatexError {
         try {
             normalMode();
@@ -191,7 +221,9 @@ public class MacroProcessor {
         }
     }
 
-    /** Get the next token to be processed. */
+    /**
+     * Get the next token to be processed.
+     */
     Token nextToken() throws EOF, LexicalError {
         if (pendingTokens.isEmpty()) {
             return lexer.nextToken();
@@ -200,8 +232,10 @@ public class MacroProcessor {
         }
     }
 
-    /** The next token to be processed. Does not remove it from
-     * the input. */
+    /**
+     * The next token to be processed. Does not remove it from
+     * the input.
+     */
     Token peekToken() throws EOF, LexicalError {
         if (pendingTokens.isEmpty()) {
             Token t = lexer.nextToken();
@@ -218,6 +252,7 @@ public class MacroProcessor {
         macroSuffixes.push();
         macros.add("context opener", opener);
     }
+
     public void popContexts(Macro opener, Location loc) throws PrelatexError {
         try {
             if (macros.lookup("context opener") != opener) {
@@ -233,8 +268,10 @@ public class MacroProcessor {
 
     Macro openBrace = new NoopMacro("{", 0);
 
-    /** The main loop for processing tokens, until either
-     *  the end of input is reached or an error is. */
+    /**
+     * The main loop for processing tokens, until either
+     * the end of input is reached or an error is.
+     */
     private void normalMode() throws EOF, PrelatexError {
         int braceDepth = 0;
         while (true) {
@@ -269,11 +306,16 @@ public class MacroProcessor {
         }
     }
 
+    void warning(String msg, Location loc) {
+        err.println(loc + ":" + msg);
+    }
+
     private void forbidPrefixes(Location loc) throws SemanticError {
         if (hasPrefixes()) {
-            throw new SemanticError("Prefixes (" + prefixes
+            warning("Prefixes (" + prefixes
                     + ") must be followed by definition macro",
                     loc);
+            clearPrefixes();
         }
     }
 
@@ -354,7 +396,7 @@ public class MacroProcessor {
             Token t = nextToken();
             switch (t) {
                 case CloseBrace b:
-                    throw new SemanticError("Unexpected close brace", b.location);
+                    throw new SemanticError("Unexpected close brace while parsing matched input", b.location);
                 case OpenBrace b:
                     result.add(t);
                     List<Token> more = parseMatched(Set.of(new CloseBrace(b.location)), expand);
@@ -437,7 +479,7 @@ public class MacroProcessor {
             switch (peekToken()) {
                 case CloseBrace b:
                     if (braceDepth == 0) {
-                        throw new SemanticError("Unexpected close brace", b.location);
+                        throw new SemanticError("Unexpected close brace while parsing macro argument", b.location);
                     }
                     braceDepth--;
                     result.addLast(nextToken());

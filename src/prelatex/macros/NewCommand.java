@@ -60,7 +60,8 @@ public class NewCommand extends Macro {
                 mp.lookup(definedName);
                 switch (name) {
                     case "newcommand":
-                        throw new SemanticError("Macro \\" + macroName + " already defined", location);
+                        mp.warning("Macro \\" + macroName + " already defined", location);
+                        break;
                     case "renewcommand":
                     case "DeclareRobustCommand":
                         break;

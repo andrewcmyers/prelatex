@@ -40,7 +40,7 @@ public class Files {
         for (String ext : extensions) {
             if (base.isEmpty() && !new File(filename).isAbsolute()) base = System.getProperty("user.dir");
             File rel = new File(base, filename + ext);
-            if (rel.canRead()) return some(rel.toString());
+            if (rel.isFile() && rel.canRead()) return some(rel.toString());
         }
         return Maybe.none();
     }

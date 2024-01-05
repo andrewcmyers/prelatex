@@ -8,10 +8,7 @@ import prelatex.Context;
 import prelatex.Namespace;
 import prelatex.tokens.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
@@ -26,9 +23,15 @@ public class ScannerLexer implements Lexer {
 
     Context<CatCode> context;
 
-    enum LexerMode { N, M, S } // XXX this should be implemented more fully and correctly
-    LexerMode mode;
+    enum LexerState {
+        N, // beginning a new line
+        M, // in the middle of a line
+        S // skipping blanks
+    }
 
+    /** The TeX lexer is supposed to be in one of the above three modes at any given time.
+     */
+    LexerState state = LexerState.N;
 
     private void setupCatcodes() {
         setCatcode('\\', ESCAPE);
@@ -46,7 +49,6 @@ public class ScannerLexer implements Lexer {
         setCatcode(255, INVALID);
         setCatcode(' ', SPACE);
         setCatcode('\t', SPACE);
-        setCatcode('\r', SPACE);
         setCatcode('\f', SPACE);
         setCatcode('%', COMMENT);
         setCatcode('@', LETTER); // Not strictly correct but simplifies package handling
@@ -76,7 +78,7 @@ public class ScannerLexer implements Lexer {
         for (String f : reversed) {
             input.includeSource(new InputStreamReader(new FileInputStream(f), utf8), f);
         }
-        mode = LexerMode.N;
+        state = LexerState.N;
         setupCatcodes();
     }
 
@@ -144,65 +146,200 @@ public class ScannerLexer implements Lexer {
         }
         return item;
     }
-    private Token parseToken() throws LexicalError, EOF {
-        int c = input.peek();
-        if ( c == -1) throw new EOF();
-        switch (getCatcode(c)) {
-            case ESCAPE: return parseMacroName();
-            case COMMENT: return parseComment();
-            case BEGIN: return parseBegin();
-            case END: return parseEnd();
-            case PARAMETER: return parseParameter();
-            case IGNORED: return parseToken();
-            // should handle ^^ character escapes
-            case INVALID: throw new LexicalError("Invalid character " + c, new ScannerLocn(location));
-            case ACTIVE: return new ActiveCharMacro(nextChar(), new ScannerLocn(location));
-            case MATH: return parseMathMode();
-            case NEWLINE:
 
-            default:
-                if (Character.isWhitespace(c)) {
+    private Token parseToken() throws LexicalError, EOF {
+        StringBuilder chars = new StringBuilder();
+        boolean paragraph = false;
+        repeat:
+        while (true) {
+            int c = input.peek();
+            if (c == -1) throw new EOF();
+            CatCode cc = getCatcode(c);
+            if (cc == IGNORED) {
+                input.next();
+                continue repeat;
+            }
+            Location where = new ScannerLocn(this.location);
+            switch (state) {
+                case N:
+                    if (cc == NEWLINE) {
+                        paragraph = true;
+                        input.next();
+                        chars.append((char)c);
+                        continue repeat;
+                    } else if (cc == SPACE) {
+                        state = LexerState.S;
+                        continue repeat;
+                    }
+                    if (paragraph) {
+                        return new ParagraphBreak(chars.toString(), where);
+                    }
+                    state = LexerState.M;
+                    break;
+                case S:
+                    if (cc == SPACE) {
+                        input.next();
+                        continue repeat;
+                    }
+                    if (cc == NEWLINE) {
+                        state = LexerState.N;
+                        return new Separator(String.valueOf(input.next()), where);
+                    }
+                    state = LexerState.M;
+                    break;
+                case M:
+                    if (cc == NEWLINE) {
+                        state = LexerState.N;
+                        return new Separator(String.valueOf(input.next()), where);
+                    }
+                    break;
+            }
+            switch (cc) {
+                case ESCAPE:
+                    return parseMacroName();
+                case COMMENT:
+                    return parseComment();
+                case BEGIN:
+                    return parseBegin();
+                case END:
+                    return parseEnd();
+                case PARAMETER:
+                    return parseParameter();
+                case SUPERSCRIPT:
+                    try {
+                        input.mark();
+                        int c1 = input.next();
+                        if (peekCatcode() == SUPERSCRIPT) {
+                            int c2 = input.next();
+                            int c3 = input.next();
+                            if (lowercaseHex(c3) && lowercaseHex(input.peek())) {
+                                int c4 = input.next();
+                                int cout = Integer.parseInt(String.valueOf((char) c3) +
+                                        String.valueOf((char)c4), 16);
+                                input.accept();
+                                return new CharacterToken(cout, where);
+                            } else if (c3 < 128) {
+                                int cout = c3 ^ 64;
+                                input.accept();
+                                return new CharacterToken(cout, where);
+                            }
+                        }
+                    } catch (EOF e) {
+                        // not a special escape sequence: just fall through
+                    }
+                    input.abort();
+                    return parseCharacter();
+                case INVALID:
+                    throw new LexicalError("Invalid character " + c, new ScannerLocn(location));
+                case ACTIVE:
+                    return new ActiveCharMacro(nextChar(), new ScannerLocn(location));
+                case MATH:
+                    return parseMathMode();
+                case SPACE:
                     return parseWhitespace();
-                }
-                return parseCharacter();
+                default: // OTHER, LETTER, SUBSCRIPT
+                    return parseCharacter();
+            }
         }
     }
 
+    private boolean lowercaseHex(int c) {
+        if ('0' <= c && c <= '9') return true;
+        if ('a' <= c && c <= 'f') return true;
+        return false;
+    }
+
+    class CharSource implements easyIO.BacktrackScanner.Source {
+        int character;
+        String filename;
+        int lineNo, column;
+        boolean done = false;
+
+        CharSource(int ch, String name, int lineNo, int column) {
+            character = ch;
+            filename = name;
+            this.lineNo = lineNo;
+            this.column = column;
+        }
+
+        @Override public String name() { return filename; }
+        @Override public int lineNo() { return lineNo; }
+        @Override public int column() { return column; }
+        @Override public void close() throws IOException { done = true; }
+
+        @Override
+        public BacktrackScanner.Location read() throws IOException {
+            if (done) return null;
+            done = true;
+            return new BacktrackScanner.Location(this, lineNo, column, character);
+        }
+    }
+
+    private Token parseWhitespace() throws EOF, LexicalError {
+        StringBuilder chars = new StringBuilder();
+        Location where = new ScannerLocn(input.location());
+        chars.append(input.next());
+        state = LexerState.S;
+        while (input.hasNext()) {
+            CatCode c = peekCatcode();
+            switch (c) {
+                case IGNORED: continue;
+                case SPACE:
+                    chars.append(input.next());
+                    continue;
+                case NEWLINE:
+                    return parseToken();
+                default:
+                    return new Separator(chars.toString(), where);
+            }
+        }
+        return syntheticReturn();
+    }
+
+    private Token syntheticReturn() throws EOF, LexicalError {
+        state = LexerState.N;
+        BacktrackScanner.Source source = input.currentSource();
+        input.includeSource(new CharSource('\r', source.name(), source.lineNo(), source.column()));
+        return parseToken();
+    }
+
     private Token parseMathMode() throws LexicalError {
-        Location start = expect("$");
-        if (input.peek() == '$') {
-            expect("$");
+        Location start = expect(MATH);
+        if (peekCatcode() == MATH) { // $$
+            expect(MATH);
             return new MathToken(true, start); // display math
         } else {
             return new MathToken(false, start);
         }
     }
 
-    Location expect(String s) throws LexicalError {
+    Location expect(CatCode cc) throws LexicalError {
         try {
             Location result = new ScannerLocn(input.location());
-            input.consume(s);
-            return result;
-        } catch (UnexpectedInput exc) {
-            throw new LexicalError("Expected \"" + s + "\"", new ScannerLocn(location));
+            if (peekCatcode() == cc)  {
+                input.next();
+                return result;
+            } else {
+                throw new LexicalError("Expected \"" + cc + "\"", new ScannerLocn(location));
+            }
         } catch (EOF e) {
-            throw new LexicalError("Unexpected end of input, expected \"" + s + "\"", new ScannerLocn(location));
+            throw new LexicalError("Unexpected end of input, expected \"" + cc + "\"", new ScannerLocn(location));
         }
     }
 
     private MacroParam parseParameter() throws LexicalError, EOF {
-        expect("#");
+        expect(PARAMETER);
         try {
             location = input.location();
         } catch (EOF e) {
             throw new LexicalError("Macro parameter ended early", new ScannerLocn(location));
         }
-        int n = input.peek();
-        if (n == '#') {
+        if (peekCatcode() == PARAMETER) {
             MacroParam p = parseParameter();
             return new MacroParam(p, new ScannerLocn(location));
-        } else if (Character.isDigit(n)) {
-            expect(Character.toString(n));
+        }
+        int n = input.next();
+        if (getCatcode(n) == OTHER && Character.isDigit(n)) {
             return new MacroParam(new CharacterToken(n, new ScannerLocn(input.location())), new ScannerLocn(location));
         } else {
             throw new LexicalError("Expected macro parameter number 1-9", new ScannerLocn(location));
@@ -210,11 +347,11 @@ public class ScannerLexer implements Lexer {
     }
 
     private Token parseBegin() throws LexicalError {
-        expect("{");
+        expect(BEGIN);
         return new OpenBrace(new ScannerLocn(location));
     }
     private Token parseEnd() throws LexicalError {
-        expect("}");
+        expect(END);
         return new CloseBrace(new ScannerLocn(location));
     }
 
@@ -230,31 +367,14 @@ public class ScannerLexer implements Lexer {
         throw new Error("Impossible");
     }
 
-    private Token parseWhitespace() {
-        int numNewlines = 0;
-        Location where;
-        try {
-            StringBuilder b = new StringBuilder();
-            where = new ScannerLocn(input.location());
-            while (Character.isWhitespace(input.peek())) {
-                if (getCatcode(input.peek()) == NEWLINE) numNewlines++;
-                b.append(input.next());
-            }
-            if (numNewlines > 1) {
-                return new ParagraphBreak(b.toString(), where);
-            }
-            return new Separator(b.toString(), where);
-        } catch (EOF exc) {
-            throw new Error("Not possible");
-        }
-    }
-
     private Separator parseComment() throws LexicalError {
         StringBuilder b = new StringBuilder();
         try {
             while (input.peek() != '\n') {
                 b.append(input.next());
             }
+            input.next(); // consume newline
+            state = LexerState.N;
             return new Separator(b.toString(), new ScannerLocn(location));
         } catch (EOF e) {
             throw new LexicalError("Unexpected end of file", new ScannerLocn(location));
@@ -262,26 +382,22 @@ public class ScannerLexer implements Lexer {
     }
 
     private Token parseMacroName() throws EOF, LexicalError {
-        expect("\\");
+        expect(ESCAPE);
         StringBuilder b = new StringBuilder();
-        int ch = input.peek();
-        if (legalLongMacroChar(ch)) {
-            while (input.hasNext() && legalLongMacroChar(input.peek())) {
+        if (peekCatcode() == LETTER) {
+            while (input.hasNext() && peekCatcode() == LETTER) {
                 b.append(input.next());
             }
-            // skip following whitespace
-            while (input.hasNext() && blank(input.peek())) input.next();
+            state = LexerState.S;
         } else { // single-character macro
-            b.append(input.next());
+            if (peekCatcode() != NEWLINE)
+                b.append(input.next());
+            state = LexerState.M;
         }
         return new MacroName(b.toString(), new ScannerLocn(location));
     }
 
-    private boolean legalLongMacroChar(int c) {
-        return Character.isAlphabetic(c) || c == '@';
-    }
-
-    private boolean blank(int c) {
-        return c == ' ' || c == '\t' || c == '\r';
+    CatCode peekCatcode() {
+        return getCatcode(input.peek());
     }
 }

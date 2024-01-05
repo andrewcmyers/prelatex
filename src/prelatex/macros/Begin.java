@@ -24,6 +24,7 @@ public class Begin extends Macro {
             }
             Location envLoc = mp.peekToken().location;
             String env = mp.parseLongMacroName(location);
+            boolean star = mp.skipStar();
             Token close = mp.nextNonblankToken();
             if (!(close instanceof CloseBrace)) {
                 throw new LexicalError("\\begin expects environment name in braces", close.location);
@@ -33,6 +34,9 @@ public class Begin extends Macro {
                 if (m1 instanceof LaTeXMacro m) {
                     List<List<Token>> arguments = mp.parseLaTeXArguments(m.numArgs, m.defaultArgs, envLoc);
                     m.applyArguments(arguments, mp, envLoc);
+                    if (star) {
+                        System.err.println("Warning: ignoring * in environment " + m1.name);
+                    }
                     mp.prependTokens(new MacroName("begingroup", envLoc));
                     return;
                 } else {
