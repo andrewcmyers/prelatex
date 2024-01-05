@@ -2,6 +2,7 @@ package prelatex.macros;
 
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Stream;
 
 import cms.util.maybe.Maybe;
 import cms.util.maybe.NoMaybeValue;
@@ -124,6 +125,12 @@ public class MacroProcessor {
         for (String name : names) {
             System.out.println(name);
         }
+    }
+
+    /** Filter out comments from a list of tokens. */
+    public List<Token> filterComments(List<Token> body) {
+        Stream<Token> s = body.stream();
+        return body.stream().filter(t -> !(t instanceof Comment)).toList();
     }
 
     /**
@@ -306,13 +313,9 @@ public class MacroProcessor {
         }
     }
 
-    void warning(String msg, Location loc) {
-        err.println(loc + ":" + msg);
-    }
-
     private void forbidPrefixes(Location loc) throws SemanticError {
         if (hasPrefixes()) {
-            warning("Prefixes (" + prefixes
+            reportWarning("Prefixes (" + prefixes
                     + ") must be followed by definition macro",
                     loc);
             clearPrefixes();
@@ -401,6 +404,8 @@ public class MacroProcessor {
                     result.add(t);
                     List<Token> more = parseMatched(Set.of(new CloseBrace(b.location)), expand);
                     result.addAll(more);
+                    break;
+                case Comment c:
                     break;
                 case MacroName m:
                     if (m.name().equals("fi"))
@@ -495,6 +500,9 @@ public class MacroProcessor {
                     braceDepth++;
                     result.addLast(nextToken());
                     break;
+                case Comment c:
+                    nextToken(); // drop on the floor
+                    break;
                 default:
                     Token t = nextToken();
                     try {
@@ -561,6 +569,9 @@ public class MacroProcessor {
     /** Report an error or warning. */
     public void reportError (String msg, Location l){
         err.println(l + ": " + msg);
+    }
+    public void reportWarning(String msg, Location loc) {
+        reportError(msg, loc);
     }
 
     /** Report a message if debugging. */

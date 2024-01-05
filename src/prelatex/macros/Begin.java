@@ -49,6 +49,7 @@ public class Begin extends Macro {
             mp.output(new MacroName("begin", location));
             mp.output(open);
             mp.output(new StringToken(env, envLoc));
+            if (star) mp.output(new StringToken("*", envLoc));
             mp.output(close);
             if (env.equals("document")) { // TODO: this is a hack
                 mp.outputPrologue();

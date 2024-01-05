@@ -52,6 +52,7 @@ public class Def extends BuiltinMacro {
             } else {
                 body = mp.parseMacroArg(Maybe.none());
             }
+            body = mp.filterComments(body);
             if (!longDef) mp.forbidPar(body);
             Disposition disposition = mp.macroDisposition.get(name_s.toString());
             makeDefinition(mp, name_s, n, params, body, disposition, location);

@@ -367,7 +367,7 @@ public class ScannerLexer implements Lexer {
         throw new Error("Impossible");
     }
 
-    private Separator parseComment() throws LexicalError {
+    private Comment parseComment() throws LexicalError {
         StringBuilder b = new StringBuilder();
         try {
             while (input.peek() != '\n') {
@@ -375,7 +375,7 @@ public class ScannerLexer implements Lexer {
             }
             input.next(); // consume newline
             state = LexerState.N;
-            return new Separator(b.toString(), new ScannerLocn(location));
+            return new Comment(b.toString(), new ScannerLocn(location));
         } catch (EOF e) {
             throw new LexicalError("Unexpected end of file", new ScannerLocn(location));
         }

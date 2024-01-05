@@ -1,8 +1,6 @@
 package prelatex.macros;
 
-import cms.util.maybe.Maybe;
 import easyIO.EOF;
-import prelatex.Main;
 import prelatex.Namespace;
 import prelatex.PrelatexError;
 import prelatex.lexer.ScannerLexer;
@@ -60,7 +58,7 @@ public class NewCommand extends Macro {
                 mp.lookup(definedName);
                 switch (name) {
                     case "newcommand":
-                        mp.warning("Macro \\" + macroName + " already defined", location);
+                        mp.reportWarning("Macro \\" + macroName + " already defined", location);
                         break;
                     case "renewcommand":
                     case "DeclareRobustCommand":
