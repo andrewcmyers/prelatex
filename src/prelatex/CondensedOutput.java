@@ -1,6 +1,7 @@
 package prelatex;
 
 import prelatex.macros.ProcessorOutput;
+import prelatex.tokens.Comment;
 import prelatex.tokens.MacroName;
 import prelatex.tokens.Separator;
 import prelatex.tokens.Token;
@@ -47,8 +48,8 @@ public class CondensedOutput implements ProcessorOutput {
             lastWasAlphaMacro = Character.isAlphabetic(s.charAt(s.length() - 1));
         } else {
             lastWasAlphaMacro = false;
-            if (removeComments && t instanceof Separator && s.charAt(0) == '%') {
-                out.print("%");
+            if (removeComments && t instanceof Comment) {
+                out.print("%\n");
             } else {
                 out.print(s);
             }

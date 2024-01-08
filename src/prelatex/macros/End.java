@@ -30,7 +30,7 @@ public class End extends LaTeXBuiltin {
             mp.outputEpilogue();
         }
         mp.output(new MacroName("end", location), new OpenBrace(location));
-        mp.output(new StringToken(s, location));
+        if (!s.isEmpty()) mp.output(new StringToken(s, location));
         mp.output(new CloseBrace(location));
     }
 }

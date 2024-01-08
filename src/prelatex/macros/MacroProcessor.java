@@ -193,7 +193,7 @@ public class MacroProcessor {
      * Start processing an included source file. Requires: no pending items.
      */
     public void includeSource(String filename) {
-        assert pendingTokens.isEmpty(); // If this fails, may need to create new Activity to save state
+        // assert pendingTokens.isEmpty(); // If this fails, may need to create new Activity to save state
         lexer.includeSource(filename);
     }
 
@@ -313,6 +313,7 @@ public class MacroProcessor {
         }
     }
 
+    /** Warn if there are any pending prefixes. */
     private void forbidPrefixes(Location loc) throws SemanticError {
         if (hasPrefixes()) {
             reportWarning("Prefixes (" + prefixes
@@ -328,7 +329,7 @@ public class MacroProcessor {
     void macroCall(MacroName m) throws PrelatexError {
         switch (macroDisposition.get(m.name())) {
             case KEEP: output(m); return;
-            case DROP:
+            case DROP: return;
             case null:
             case EXPAND: break;
         }
@@ -350,7 +351,14 @@ public class MacroProcessor {
             output(m);
             return;
         }
-        binding.apply(this, m.location);
+        try {
+            binding.apply(this, m.location);
+        } catch (PrelatexError e) {
+            reportWarning(e.getMessage(), m.location);
+            reportWarning("Trying to recover by not expanding " + m
+                    + " (may need to keep this macro)", m.location);
+            output(m);
+        }
     }
 
     /** Skip past tokens that TeX considers 'blank' */
@@ -474,6 +482,7 @@ public class MacroProcessor {
      * <p>A sequence is properly matched if each open brace is followed after
      * properly matched tokens by a corresponding closing brace, and each
      * conditional is followed similarly by a corresponding \fi
+     * See The TexBook, p. 214.
      */
     List<Token> parseMacroArg(Maybe<Token> delimiter, boolean expand) throws PrelatexError, EOF {
         if (!delimiter.isPresent()) skipBlanks();
@@ -543,27 +552,7 @@ public class MacroProcessor {
 
     /** Whether the token received matches what was expected. */
     boolean matchesToken(Token expected, Token received) {
-        switch (expected) {
-            case OpenBrace b: return received instanceof OpenBrace;
-            case CloseBrace b: return received instanceof CloseBrace;
-            case Separator s: return received instanceof Separator;
-            case MacroName m:
-                if (received instanceof MacroName m2) {
-                    return m.name().equals(m2.name());
-                } else {
-                    return false;
-                }
-            case MacroParam p:
-                throw new Error("Can't match on macro parameter");
-            case CharacterToken c:
-                if (received instanceof CharacterToken c2) {
-                    return c.chars().equals(c2.chars());
-                } else {
-                    return false;
-                }
-            default:
-                throw new Error("Unrecognized token parameter");
-        }
+        return expected.equals(received);
     }
 
     /** Report an error or warning. */

@@ -10,6 +10,7 @@ public class StringToken extends Token {
 
     public StringToken(String s, Location l) {
         super(l);
+        assert !s.isEmpty();
         this.chars = s;
     }
 

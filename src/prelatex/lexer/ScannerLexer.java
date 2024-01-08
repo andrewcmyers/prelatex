@@ -167,9 +167,6 @@ public class ScannerLexer implements Lexer {
                         input.next();
                         chars.append((char)c);
                         continue repeat;
-                    } else if (cc == SPACE) {
-                        state = LexerState.S;
-                        continue repeat;
                     }
                     if (paragraph) {
                         return new ParagraphBreak(chars.toString(), where);

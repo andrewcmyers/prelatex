@@ -145,6 +145,12 @@ public class Main {
                 for (DataObject o : config.get("expand package")) {
                     if (o instanceof Text name) packageDisposition.put(name.value(), EXPAND);
                 }
+                for (DataObject o : config.get("drop input")) {
+                    if (o instanceof Text name) packageDisposition.put("input " + name.value(), DROP);
+                }
+                for (DataObject o : config.get("keep input")) {
+                    if (o instanceof Text name) packageDisposition.put("input " + name.value(), KEEP);
+                }
                 for (DataObject o : config.get("drop macro")) {
                     if (o instanceof Text name) macroDisposition.put(name.value(), DROP);
                 }
