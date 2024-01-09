@@ -15,4 +15,8 @@ public class NoopMacro extends LaTeXBuiltin {
 
     @Override
     public void applyArguments(List<List<Token>> arguments, MacroProcessor mp, Location location) { }
+
+    @Override public boolean equals(Object o) {
+        return (o instanceof NoopMacro m && m.name.equals(name));
+    }
 }

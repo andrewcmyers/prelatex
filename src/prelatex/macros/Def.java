@@ -54,7 +54,7 @@ public class Def extends BuiltinMacro {
             }
             body = mp.filterComments(body);
             if (!longDef) mp.forbidPar(body);
-            Disposition disposition = mp.macroDisposition.get(name_s.toString());
+            Disposition disposition = mp.macroDisposition.get(name_s.name());
             makeDefinition(mp, name_s, n, params, body, disposition, location);
         } catch (EOF e) {
             throw new SemanticError("Unexpected end of file in \\def definition", location);
@@ -71,6 +71,7 @@ public class Def extends BuiltinMacro {
                                   List<Token> body, Disposition disposition, Location location) {
         if (disposition == DROP) body = List.of();
         if (disposition == KEEP) {
+            mp.output(new MacroName(name, location));
             mp.output(mname);
             mp.output(params);
             mp.output(new OpenBrace(location));

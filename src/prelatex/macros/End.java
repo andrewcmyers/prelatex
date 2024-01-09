@@ -18,8 +18,8 @@ public class End extends LaTeXBuiltin {
         MacroName endName = new MacroName("end" + s, location);
         try {
             if (mp.lookup(endName) instanceof LaTeXMacro) {
-                mp.prependTokens(new MacroName("endgroup", endName.location));
                 mp.prependTokens(endName);
+                mp.prependTokens(new MacroName("endgroup", endName.location));
                 return;
             }
             // wrong kind of macro, fall through
@@ -29,6 +29,7 @@ public class End extends LaTeXBuiltin {
         if (s.equals("document")) {
             mp.outputEpilogue();
         }
+        mp.popContexts(new NoopMacro(s, 0), location);
         mp.output(new MacroName("end", location), new OpenBrace(location));
         if (!s.isEmpty()) mp.output(new StringToken(s, location));
         mp.output(new CloseBrace(location));

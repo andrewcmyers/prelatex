@@ -43,7 +43,7 @@ public class NewCommand extends Macro {
                 mp.skipBlanks();
             }
             MacroName macroName = mp.parseMacroName(location);
-            Disposition disposition = mp.macroDisposition.get(macroName);
+            Disposition disposition = mp.macroDisposition.get(macroName.name());
             boolean expectSuffix = mp.hasPrefix("WithSuffix");
             boolean dropDefn = false;
             mp.clearPrefixes();

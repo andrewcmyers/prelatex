@@ -260,13 +260,14 @@ public class MacroProcessor {
         macros.add("context opener", opener);
     }
 
-    public void popContexts(Macro opener, Location loc) throws PrelatexError {
+    public void popContexts(Macro closer, Location loc) throws PrelatexError {
         try {
-            if (macros.lookup("context opener") != opener) {
-                throw new SemanticError("Missing \\endgroup or extra }", loc);
+            Macro expected = macros.lookup("context opener");
+            if (!closer.equals(expected)) {
+                throw new SemanticError("Context closed improperly, expecting " + closer.name, loc);
             }
         } catch (Namespace.LookupFailure e) {
-            throw new SemanticError("Missing " + opener.name + "?", loc);
+            throw new SemanticError("Missing " + closer.name + "?", loc);
         }
         macros.pop();
         catcodes.pop();
@@ -763,7 +764,7 @@ public class MacroProcessor {
     }
 
     /**  Skip the next token if it is an asterisk and return true if so. */
-    public boolean skipStar() throws LexicalError {
+    public boolean optionalStar() throws LexicalError {
         try {
             skipBlanks();
             if (peekToken() instanceof CharacterToken c && c.codepoint() == '*') {

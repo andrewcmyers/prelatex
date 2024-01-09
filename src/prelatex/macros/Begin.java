@@ -24,7 +24,7 @@ public class Begin extends Macro {
             }
             Location envLoc = mp.peekToken().location;
             String env = mp.parseLongMacroName(location);
-            boolean star = mp.skipStar();
+            boolean star = mp.optionalStar();
             Token close = mp.nextNonblankToken();
             if (!(close instanceof CloseBrace)) {
                 throw new LexicalError("\\begin expects environment name in braces", close.location);
@@ -51,6 +51,7 @@ public class Begin extends Macro {
             mp.output(new StringToken(env, envLoc));
             if (star) mp.output(new StringToken("*", envLoc));
             mp.output(close);
+            mp.pushContexts(new NoopMacro(star ? env + "*" : env, 0));
             if (env.equals("document")) { // TODO: this is a hack
                 mp.outputPrologue();
             }

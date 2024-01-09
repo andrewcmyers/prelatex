@@ -14,7 +14,7 @@ public class StarredBuiltin extends LaTeXBuiltin {
     }
     @Override
     public void apply(MacroProcessor mp, Location location) throws PrelatexError {
-        boolean star = mp.skipStar();
+        boolean star = mp.optionalStar();
         List<List<Token>> arguments = mp.parseLaTeXArguments(numArgs, defaultArgs, location);
         applyArguments(arguments, mp, location, star);
     }
