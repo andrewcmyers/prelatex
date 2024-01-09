@@ -90,6 +90,7 @@ public class ScannerLexer implements Lexer {
         try {
             Reader r = new InputStreamReader(new FileInputStream(filename),
                     StandardCharsets.UTF_8);
+            input.includeSource(new CharSource(' ', filename, 1, 0));
             input.includeSource(r, filename);
         } catch (FileNotFoundException exc) {
             System.err.println(exc.getMessage() + filename);
